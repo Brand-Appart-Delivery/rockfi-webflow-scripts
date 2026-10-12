@@ -24,9 +24,13 @@ import { initStackCards } from "./animate/stack-cards.js";
 import { initSpeakersSlot } from "./speakers-slot.js";
 import { initNavDropdownHover } from "./nav-dropdown-hover";
 import { initFitScale } from "./fit-scale.js";
+import { initNavMenuLabel } from "./nav-menu-label.js";
 
 const BUILD_VERSION = new Date().toISOString().slice(0, 10);
-console.log(`%c[RockFi] main.js — build v1.0.2 ${BUILD_VERSION}`, "color:#7dd3fc");
+console.log(
+  `%c[RockFi] main.js — build v1.0.2 ${BUILD_VERSION}`,
+  "color:#7dd3fc",
+);
 
 onReady(() => {
   initCore();
@@ -49,6 +53,7 @@ onReady(() => {
   initTagReveal();
   initNameTokens();
   initNavHero();
+  initNavMenuLabel();
   initHeroBgParallax();
   initStackCards();
   initNavDropdownHover();

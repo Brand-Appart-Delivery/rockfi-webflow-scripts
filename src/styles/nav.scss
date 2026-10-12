@@ -210,3 +210,32 @@ $nav-dark: '[data-wf--navbar--variant$="-dark"]';
     transform: scaleX(0);
   }
 }
+
+.menu-label_mask {
+  display: inline-grid;
+  justify-items: center;
+  text-align: center;
+  overflow: hidden;
+  vertical-align: top;
+  padding-block: 0.15em;
+  margin-block: -0.15em;
+}
+
+.menu-label_item {
+  grid-area: 1 / 1;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.3s ease;
+}
+
+/* Fermé : "Menu" visible, "Fermer" attend en bas */
+.menu-label_item.is-open  { transform: translateY(0); opacity: 1; }
+.menu-label_item.is-close { transform: translateY(110%); opacity: 0; }
+
+/* Ouvert : "Menu" part vers le haut, "Fermer" monte */
+.navbar_menu-button.w--open .menu-label_item.is-open  { transform: translateY(-110%); opacity: 0; }
+.navbar_menu-button.w--open .menu-label_item.is-close { transform: translateY(0); opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu-label_item { transition: opacity 0.2s ease; transform: none !important; }
+}

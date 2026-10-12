@@ -1,8 +1,3 @@
-// src/animate/scan.js
-// Lit les attributs data-inview / data-text-reveal / data-grid-enter / data-grid-reveal du DOM
-// et déclenche l'animation GSAP correspondante au scroll via ScrollTrigger.
-// Compatible Finsweet Attributes v2 (fs-list).
-
 import { PRESETS } from "./presets.js";
 
 function readOpts(el) {
@@ -23,16 +18,14 @@ function siblingIndex(el) {
 
   while (ancestor) {
     const matches = Array.from(ancestor.querySelectorAll(`[data-inview="${presetName}"]`));
-    if (matches.length > 1) {
-      return matches.indexOf(el);
-    }
+    if (matches.length > 1) return matches.indexOf(el);
     ancestor = ancestor.parentElement;
   }
 
   return 0;
 }
 
-function attachTrigger(el, animation, opts) {
+function attachTrigger(el, animation) {
   const start = el.dataset.animStart || "top 85%";
   const repeat = el.dataset.animRepeat === "true";
 
@@ -74,12 +67,6 @@ function attachTrigger(el, animation, opts) {
   }
 }
 
-// -------------------------------------------------------------
-// Logique data-grid-reveal (réutilisable au filtrage)
-// -------------------------------------------------------------
-
-// Enfants DIRECTS de la grille uniquement. Avant, ".w-dyn-item" attrapait aussi les
-// listes imbriquées (les tags de ville dans chaque carte), qui étaient animés en plus.
 function getGridItems(grid) {
   let items = Array.from(grid.querySelectorAll(":scope > .w-dyn-item, :scope > [data-anim-item]"));
   if (!items.length) items = Array.from(grid.querySelectorAll(":scope > *"));
@@ -96,10 +83,20 @@ function isShown(item) {
   );
 }
 
-// Identifiant stable d'une carte (lien, sinon début du texte)
 function itemKey(item) {
   const link = item.querySelector("a[href]");
   return (link && link.getAttribute("href")) || (item.textContent || "").trim().slice(0, 40);
+}
+
+const toTarget = (item) => item.querySelector("[data-anim-target]") || item;
+
+function showWithoutAnimation(items) {
+  items.forEach((item) => {
+    const target = toTarget(item);
+    target.classList.add("--visible");
+    window.gsap.killTweensOf(target);
+    window.gsap.set(target, { clearProps: "all" });
+  });
 }
 
 function runGridReveal(grid, isRefilter = false) {
@@ -107,14 +104,17 @@ function runGridReveal(grid, isRefilter = false) {
   const preset = PRESETS[presetName];
   if (!preset) return;
 
-  const opts = readOpts(grid);
-  const staggerStep = opts.stagger ?? 0.08;
-
-  // Filtre UNIQUEMENT les cartes actuellement visibles à l'écran
   const visibleItems = getGridItems(grid).filter(isShown);
   if (!visibleItems.length) return;
 
-  // Détection de la première rangée
+  if (isRefilter && grid._gridEntered) {
+    showWithoutAnimation(visibleItems);
+    return;
+  }
+
+  const opts = readOpts(grid);
+  const staggerStep = opts.stagger ?? 0.08;
+
   const rowTop = (item) => item.getBoundingClientRect().top;
   const firstTop = rowTop(visibleItems[0]);
   const tolerance = 25;
@@ -122,29 +122,23 @@ function runGridReveal(grid, isRefilter = false) {
   const firstRowItems = visibleItems.filter((item) => Math.abs(rowTop(item) - firstTop) <= tolerance);
   const otherItems = visibleItems.filter((item) => !firstRowItems.includes(item));
 
-  // Re-rendu Finsweet / "Afficher plus" / saisie : si la 1re rangée affichée est la même
-  // qu'avant, il n'y a rien à rejouer. C'est ce qui relançait l'animation 2-3 fois au chargement.
   const signature = firstRowItems.map(itemKey).join("|");
   if (isRefilter && grid._gridSig === signature) return;
   grid._gridSig = signature;
 
-  const toTarget = (item) => item.querySelector("[data-anim-target]") || item;
   const firstRowTargets = firstRowItems.map(toTarget);
   const otherTargets = otherItems.map(toTarget);
 
-  // Tue l'animation précédente si elle tournait
   if (grid._gridRevealTl) {
     grid._gridRevealTl.kill();
     grid._gridRevealTl = null;
   }
 
-  // Lignes suivantes : immédiatement visibles sans animation
   otherTargets.forEach((target) => {
     target.classList.add("--visible");
     window.gsap.set(target, { opacity: 1, y: 0, scale: 1, clearProps: "all" });
   });
 
-  // Construction de la timeline pour la 1ère rangée
   const tl = window.gsap.timeline({ paused: true });
   grid._gridRevealTl = tl;
   grid._gridFirstRow = firstRowTargets;
@@ -157,14 +151,6 @@ function runGridReveal(grid, isRefilter = false) {
     tl.add(itemAnim, index * staggerStep);
   });
 
-  // RE-FILTRAGE alors que la grille est déjà entrée à l'écran : on rejoue tout de suite
-  if (isRefilter && grid._gridEntered) {
-    firstRowTargets.forEach((t) => t.classList.add("--visible"));
-    tl.play(0);
-    return;
-  }
-
-  // Déclencheur d'entrée : créé UNE seule fois par grille, il lit toujours la timeline courante
   if (!grid._gridTrigger) {
     const start = grid.dataset.animStart || "top 95%";
 
@@ -187,7 +173,6 @@ function runGridReveal(grid, isRefilter = false) {
     });
   }
 
-  // Grille déjà à l'écran (ou déjà dépassée) au moment du calcul
   if (grid._gridEntered) return;
 
   const rect = grid.getBoundingClientRect();
@@ -204,14 +189,9 @@ function runGridReveal(grid, isRefilter = false) {
   }
 }
 
-// -------------------------------------------------------------
-// Re-déclenchement au changement de filtre (branché UNE seule fois)
-// -------------------------------------------------------------
 let refilterBound = false;
 let refilterTimer = null;
 
-// Une même action (saisie, select, rendu Finsweet) déclenche plusieurs événements :
-// on les regroupe en un seul passage.
 function triggerRefilter() {
   clearTimeout(refilterTimer);
   refilterTimer = setTimeout(() => {
@@ -223,7 +203,6 @@ function bindRefilter(root) {
   if (refilterBound) return;
   refilterBound = true;
 
-  // 1. Écoute native directe sur les formulaires de filtres (Input text + Select ville)
   root
     .querySelectorAll('[fs-list-element="filters"], form.blog-list_filter-form-flex')
     .forEach((form) => {
@@ -232,12 +211,10 @@ function bindRefilter(root) {
       form.addEventListener("reset", triggerRefilter);
     });
 
-  // 2. Écoute du bouton "Réinitialiser" Finsweet
   root.querySelectorAll('[fs-list-element="clear"]').forEach((btn) => {
     btn.addEventListener("click", triggerRefilter);
   });
 
-  // 3. API Finsweet Attributes v2 (Hook 'afterRender' officiel)
   window.FinsweetAttributes = window.FinsweetAttributes || [];
   window.FinsweetAttributes.push([
     "list",
@@ -251,13 +228,9 @@ function bindRefilter(root) {
   ]);
 }
 
-// -------------------------------------------------------------
-// Scanner principal
-// -------------------------------------------------------------
 export function scanAnimations(root = document) {
   if (typeof window.gsap === "undefined" || typeof window.ScrollTrigger === "undefined") return;
 
-  // Chaque élément n'est traité qu'une fois, même si scanAnimations() est rappelée
   const claim = (el) => {
     if (el.dataset.animBound === "true") return false;
     el.dataset.animBound = "true";
@@ -270,7 +243,6 @@ export function scanAnimations(root = document) {
   });
   if (grids.length) bindRefilter(root);
 
-  // 2. data-inview
   root.querySelectorAll("[data-inview]").forEach((el) => {
     const presetName = el.dataset.inview;
     const preset = PRESETS[presetName];
@@ -279,8 +251,6 @@ export function scanAnimations(root = document) {
 
     const opts = readOpts(el);
 
-    // Réglages de décalage par preset : seul count-up est décalé plus fort,
-    // tous les autres presets gardent exactement l'ancien comportement.
     const STAGGER_BY_PRESET = {
       "count-up": { step: 0.25, max: 1 },
     };
@@ -291,18 +261,16 @@ export function scanAnimations(root = document) {
     opts.delay = (opts.delay ?? 0) + extraDelay;
 
     const animation = preset(el, opts);
-    attachTrigger(el, animation, opts);
+    attachTrigger(el, animation);
   });
 
-  // 3. data-text-reveal
   root.querySelectorAll("[data-text-reveal]").forEach((el) => {
     if (!claim(el)) return;
     const opts = readOpts(el);
     const animation = PRESETS.heading(el, opts);
-    attachTrigger(el, animation, opts);
+    attachTrigger(el, animation);
   });
 
-  // 4. data-grid-enter
   root.querySelectorAll("[data-grid-enter]").forEach((group) => {
     const items = Array.from(group.querySelectorAll(":scope > [data-anim-item]"));
     if (!items.length) return;
@@ -321,6 +289,6 @@ export function scanAnimations(root = document) {
       tl.add(a.play(), i * (opts.stagger ?? 0.1));
     });
 
-    attachTrigger(group, tl, opts);
+    attachTrigger(group, tl);
   });
 }
