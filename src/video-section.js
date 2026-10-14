@@ -32,6 +32,12 @@
 //   data-video-autoplay-start="12"  l'aperçu commence (et reboucle) à 12 s. Défaut : 0.
 //   data-video-autoplay-delay="0"   délai (secondes) entre l'arrivée à l'écran et le
 //                                   début de l'aperçu. Défaut : 0 (immédiat).
+//   data-video-bg                   fond vidéo (hero, section...) : cover fluide au resize, et
+//                                   l'aperçu n'apparaît que quand la lecture a vraiment démarré
+//                                   (pas de timeout : le visuel de secours reste dessous, le
+//                                   loader du lecteur n'est jamais montré). À combiner avec
+//                                   data-video-autoplay. Voir video.scss ([data-video-bg]).
+//   data-video-ratio="16/9"         ratio réel de la vidéo (avec data-video-bg). Défaut : 16/9.
 //   data-video-host                 (sur un élément enfant) accueille le lecteur à la
 //                                   place de la carte entière ; prioritaire sur le reste
 //   data-video-captions="URL.vtt"   sous-titres
@@ -79,7 +85,8 @@ const DEFAULT_FOLLOW = 0.18; // lissage du bouton qui suit la souris
 const DEFAULT_AUTOPLAY_DELAY = 0; // secondes (0 = dès que la carte est visible)
 const FADE_MS = 350; // doit correspondre à la transition CSS des holders
 const REVEAL_TIMEOUT_MS = 4000; // sécurité lecteur classique
-const PREVIEW_REVEAL_TIMEOUT_MS = 2500; // sécurité aperçu
+const PREVIEW_REVEAL_TIMEOUT_MS = 2500; // sécurité aperçu (désactivée avec data-video-bg)
+const COVER_BASE_W = 1920; // largeur fixe de l'iframe en mode fond (mise à l'échelle par transform)
 
 function getVideoInfo(src) {
   const s = (src || "").trim();
@@ -379,6 +386,34 @@ function initFollow(scope, mover, anchor, ease, canShow, onClick) {
   };
 }
 
+// Cover fluide pour un fond vidéo (Vimeo / YouTube) :
+// l'iframe garde une taille fixe (COVER_BASE_W × hauteur selon le ratio) et on la met à l'échelle
+// avec transform (GPU) pour remplir le cadre. Pas de relayout de l'iframe au resize = fluide.
+// Variables posées sur l'élément : --cover-w, --cover-h, --cover-scale (lues par video.scss).
+function initCoverFit(el) {
+  const [rw, rh] = (el.dataset.videoRatio || "16/9").split("/").map(Number);
+  const ratioW = rw > 0 ? rw : 16;
+  const ratioH = rh > 0 ? rh : 9;
+  const baseW = COVER_BASE_W;
+  const baseH = (baseW * ratioH) / ratioW;
+
+  el.style.setProperty("--cover-w", `${baseW}px`);
+  el.style.setProperty("--cover-h", `${baseH}px`);
+
+  const update = () => {
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    if (!w || !h) return;
+    const scale = Math.max(w / baseW, h / baseH);
+    el.style.setProperty("--cover-scale", scale.toFixed(4));
+  };
+
+  update();
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(update).observe(el);
+  else window.addEventListener("resize", update);
+  window.addEventListener("load", update);
+}
+
 // ---------------------------------------------------------------------------
 // Lecteur unique : un seul actif à la fois (les aperçus muets ne comptent pas)
 // ---------------------------------------------------------------------------
@@ -394,6 +429,7 @@ function claimPlayback(stop) {
 //   root    : élément qui porte les classes is-playing / is-previewing
 //   host    : élément dans lequel le lecteur est inséré (au-dessus du poster)
 //   trigger : bouton (groupe) qui lance la vidéo et qui bouge au magnétisme
+//   bg      : mode fond vidéo (pas de timeout d'affichage de l'aperçu)
 // ---------------------------------------------------------------------------
 function setupPlayback({
   root,
@@ -410,6 +446,7 @@ function setupPlayback({
   autoplay,
   autoplayDelay,
   autoplayStart,
+  bg = false,
 }) {
   loadDuration(src, timerEl, duration);
 
@@ -527,8 +564,9 @@ function setupPlayback({
       root.classList.add("is-previewing");
     };
 
-    // Sécurité : si "playing" n'arrive jamais, on affiche quand même l'aperçu
-    previewRevealTimer = setTimeout(reveal, PREVIEW_REVEAL_TIMEOUT_MS);
+    // Sécurité : si "playing" n'arrive jamais, on affiche quand même l'aperçu.
+    // Pas en mode fond : on préfère garder le visuel de secours que montrer le loader du lecteur.
+    if (!bg) previewRevealTimer = setTimeout(reveal, PREVIEW_REVEAL_TIMEOUT_MS);
 
     const target = previewHolder.firstElementChild;
 
@@ -552,11 +590,16 @@ function setupPlayback({
       clickToPlay: false,
       keyboard: { focused: false, global: false },
       fullscreen: { enabled: false },
-      // Boucle gérée à la main (voir "ended") pour pouvoir reboucler à autoplayStart
-      loop: { active: false },
+      // Boucle gérée à la main (voir "ended") pour pouvoir reboucler à autoplayStart.
+      // Fond vidéo sans point de départ : boucle native du lecteur, qui évite l'écran de fin
+      // (et l'interface Vimeo qui apparaît un instant) à chaque tour.
+      loop: { active: bg && autoplayStart <= 0 },
       tooltips: { controls: false, seek: false },
       // YouTube : aucune barre de contrôle ni raccourci clavier dans l'aperçu
       youtube: { ...YOUTUBE_OPTIONS, controls: 0, disablekb: 1 },
+      // Fond vidéo Vimeo : mode "background" natif (aucun élément d'interface : ni bouton play,
+      // ni titre, ni barre, ni loader). Retirer cette ligne pour revenir au lecteur standard.
+      vimeo: bg ? { background: 1 } : {},
     });
     previewPlayer = pl;
 
@@ -748,7 +791,9 @@ function setupPlayback({
           inView = entry.isIntersecting;
           syncPreview();
         },
-        { threshold: 0.25 },
+        // Fond vidéo : la lecture reprend une demi-hauteur d'écran AVANT que la section entre
+        // dans la vue, pour ne jamais voir l'état "en pause" du lecteur Vimeo en scrollant.
+        bg ? { threshold: 0, rootMargin: "50% 0px" } : { threshold: 0.25 },
       ).observe(root);
     }
   }
@@ -790,10 +835,18 @@ function readAutoplayStart(el) {
   return isFinite(v) && v > 0 ? v : 0;
 }
 
+// Fond vidéo : actif si data-video-bg est présent (et != "false")
+function readBg(el) {
+  return el.dataset.videoBg !== undefined && el.dataset.videoBg !== "false";
+}
+
 // Section principale
 function initOne(media) {
   const src = media.dataset.videoPlayer;
   if (!src) return;
+
+  const bg = readBg(media);
+  if (bg) initCoverFit(media);
 
   const layout = media.closest(".video_layout") || media.parentElement;
 
@@ -816,6 +869,7 @@ function initOne(media) {
     autoplay: readAutoplay(media),
     autoplayDelay: readAutoplayDelay(media),
     autoplayStart: readAutoplayStart(media),
+    bg,
   });
 }
 

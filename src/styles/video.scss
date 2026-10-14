@@ -4,6 +4,10 @@ $yellow: #f0ff4d;
 $black: #1a1a1a;
 $fade: 0.35s;
 
+// Ratio de la vidéo du hero (largeur / hauteur) : à adapter à ta vidéo
+$hero-ratio-w: 89;
+$hero-ratio-h: 40;
+
 // ---- Mixins ----
 @mixin hidden {
   opacity: 0;
@@ -254,6 +258,133 @@ $fade: 0.35s;
 
 .is-previewing .video_controller {
   @include shown;
+}
+
+// ---- Hero secondaire : vidéo en cover, sous le dégradé, le texte et la nav ----
+[data-nav-hero] {
+  // Bloc image + vidéo : une couche fermée tout en bas
+  .img_wrapper {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    isolation: isolate; // le z-index du holder reste enfermé dans ce bloc
+  }
+
+  .video_preview-holder {
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    container-type: size; // permet d'utiliser cqw / cqh
+
+    .plyr,
+    .plyr__video-wrapper {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0 !important;
+      aspect-ratio: auto !important; // neutralise le 89 / 40 posé par Plyr
+      background: transparent;
+    }
+
+    // Équivalent d'un object-fit: cover pour l'iframe (Vimeo / YouTube)
+    .plyr__video-embed__container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: #{"max(100cqw, calc(100cqh * #{$hero-ratio-w} / #{$hero-ratio-h}))"};
+      height: #{"max(100cqh, calc(100cqw * #{$hero-ratio-h} / #{$hero-ratio-w}))"};
+      transform: translate(-50%, -50%) !important; // neutralise le translateY de Plyr
+    }
+
+    iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  // Dégradé et texte toujours au-dessus de la vidéo
+  .section_secondary_hero-gradient {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .section_secondary_hero-copy {
+    z-index: 2;
+  }
+}
+
+// ---- Vidéo en fond de n'importe quelle section (data-video-bg) ----
+// Le wrapper [data-video-player][data-video-autoplay][data-video-bg] est une couche absolue
+// qui remplit la section parente. Le cover est fluide : l'iframe garde une taille fixe
+// (--cover-w / --cover-h) et est mise à l'échelle (--cover-scale), valeurs posées par
+// initCoverFit() dans video-section.js.
+[data-video-bg] {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  isolation: isolate; // le z-index du holder reste enfermé dans ce bloc
+  pointer-events: none;
+
+  .video_preview-holder {
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+
+    .plyr,
+    .plyr__video-wrapper {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      padding: 0 !important;
+      aspect-ratio: auto !important; // neutralise le ratio posé par Plyr
+      background: transparent;
+    }
+
+    .plyr__video-embed__container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: var(--cover-w, 1920px);
+      height: var(--cover-h, 1080px);
+      padding: 0 !important;
+      transform: translate(-50%, -50%) scale(var(--cover-scale, 1)) !important; // neutralise le translateY de Plyr
+      transform-origin: center center;
+      will-change: transform;
+    }
+
+    // Pas de poster ni d'indicateur de chargement Plyr
+    .plyr__poster,
+    .plyr__spinner {
+      display: none !important;
+    }
+
+    iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// Contenu d'une section qui a une vidéo en fond : au-dessus de la vidéo, où que soit placé
+// le bloc vidéo dans la section (avant ou après le contenu).
+// Sans ça, la couche vidéo (position: absolute) se peint PAR-DESSUS le contenu non positionné.
+*:has(> [data-video-bg]) {
+  position: relative; // ancre la couche vidéo (inset: 0) sur la section
+}
+*:has(> [data-video-bg]) > :not([data-video-bg]) {
+  position: relative;
+  z-index: 1;
 }
 
 // ---- Bouton qui suit la souris (data-video-follow) ----

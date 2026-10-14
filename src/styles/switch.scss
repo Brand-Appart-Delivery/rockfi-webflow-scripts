@@ -1,0 +1,65 @@
+// src/styles/switch.scss
+// Switch piloté par data-attributes (voir src/switch.js)
+
+// ---- Contenus : les panneaux inactifs sont cachés (les classes flex-v écrasent [hidden]) ----
+[data-switch-panel][hidden] {
+  display: none !important;
+}
+
+// ---- Slide latéral : le contenu déborde pendant l'animation, on évite le scroll horizontal ----
+// (clip, et non hidden : ne crée pas de conteneur de scroll et ne casse pas les éléments sticky)
+[data-switch-group] {
+  overflow-x: clip;
+}
+
+// ---- Fond qui glisse derrière le bouton sélectionné ----
+.has-switch-indicator {
+  position: relative;
+}
+
+.switch_indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 0.75rem; // même rayon que .switch_item
+  background-color: var(--base-color-neutral--white);
+  width: var(--sw-w, 0px);
+  height: var(--sw-h, 0px);
+  transform: translate3d(var(--sw-x, 0px), var(--sw-y, 0px), 0);
+  opacity: 0;
+  will-change: transform, width;
+
+  // Visible dès le premier placement (sans glissade depuis 0)
+  &.is-visible {
+    opacity: 1;
+  }
+
+  // Transition activée après le placement initial
+  &.is-animated {
+    transition:
+      transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      height 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+// ---- Boutons : plus de fond propre (c'est l'indicateur qui le porte), seul le texte change ----
+// Scopé à .has-switch-indicator (classe posée par le JS APRÈS avoir lu la couleur du bouton
+// sélectionné pour la donner à l'indicateur : variante light, dark...). Sans JS, les boutons
+// gardent leur apparence Webflow d'origine.
+// !important : neutralise le fond de la variante Webflow "sélectionné" (et son hover)
+.has-switch-indicator [data-switch-btn] {
+  position: relative;
+  z-index: 1;
+  background-color: transparent !important;
+  transition: color 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch_indicator.is-animated,
+  .has-switch-indicator [data-switch-btn] {
+    transition: none;
+  }
+}

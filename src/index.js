@@ -17,6 +17,7 @@ import { initHeroParallax } from "./animate/hero-parallax.js";
 import { initListLenisSync } from "./list-lenis-sync.js";
 import { initFocusStories } from "./focus-stories.js";
 import { initVideoSection } from "./video-section.js";
+import { initSwitch } from "./switch.js";
 import { initNameTokens } from "./name-tokens.js";
 import { initNavHero } from "./nav-hero.js";
 import { initHeroBgParallax } from "./animate/hero-bg-parallax.js";
@@ -42,6 +43,7 @@ onReady(() => {
   initEmbeds();
   initBlogToc();
   initAnimations();
+  initSwitch();
   initSchema();
   initSvgTrace();
   initParallax();
