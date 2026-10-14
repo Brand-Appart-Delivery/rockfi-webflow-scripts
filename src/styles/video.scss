@@ -387,6 +387,24 @@ $hero-ratio-h: 40;
   z-index: 1;
 }
 
+// ---- Hero avec vidéo à lancer : le lecteur remplace bouton + voile ----
+// Le lecteur (.video_player-holder) est ajouté dans le bloc [data-video-player]. Tant qu'il est
+// là (lecture en cours), on masque le bouton "Voir la vidéo" et le voile ; ils reviennent quand
+// le lecteur est retiré (fin de la vidéo / arrêt). N'agit que sur le bloc du hero.
+.header_component_img-wrapper[data-video-player] {
+  .video_controller,
+  .event_img-veil {
+    transition: opacity 0.3s ease;
+  }
+
+  &:has(> .video_player-holder) {
+    .video_controller,
+    .event_img-veil {
+      @include hidden;
+    }
+  }
+}
+
 // ---- Bouton qui suit la souris (data-video-follow) ----
 // À garder EN DERNIER : ces règles doivent l'emporter sur les états
 // ci-dessus (hover du .video_layout, .is-previewing, .is-personas, .is-presse...).
