@@ -446,3 +446,38 @@ $hero-ratio-h: 40;
 .is-follow-cursor * {
   cursor: none;
 }
+
+// ---- Thème du bouton qui suit la souris selon le fond ----
+// Par défaut (fond sombre) : verre blanc + texte blanc.
+// .is-tone-light (fond clair) : verre sombre + texte sombre.
+// La classe est posée par initFollow() selon data-video-tone ou la couleur de fond détectée.
+.video_controller.is-follow {
+  .icon-48 rect,
+  .icon-48 path,
+  .video_controller-meta,
+  .video_controller-time {
+    transition:
+      fill 0.3s ease,
+      fill-opacity 0.3s ease,
+      color 0.3s ease;
+  }
+
+  &.is-tone-light {
+    .icon-48 rect {
+      fill: $black;
+      fill-opacity: 0.12;
+    }
+
+    .icon-48 path {
+      fill: $black;
+    }
+
+    .video_controller-meta {
+      color: $black;
+    }
+
+    .video_controller-time {
+      color: rgba($black, 0.5);
+    }
+  }
+}

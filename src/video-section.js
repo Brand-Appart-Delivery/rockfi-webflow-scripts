@@ -50,7 +50,7 @@
 //                                   souris entre dans la zone, la suit, et le curseur est
 //                                   masqué. Un clic dans la zone lance la vidéo. Le bouton
 //                                   se masque au-dessus des liens / boutons de la zone.
-//                                   Valeur facultative = lissage (0.18 par défaut,
+//                                   Valeur facultative = lissage (0.25 par défaut,
 //                                   1 = instantané). Désactivé sur tactile.
 //   data-video-follow-zone          définit la zone de suivi. Cherché dans l'ordre :
 //                                   1) sur un élément ENFANT du root (réduit la zone),
@@ -59,6 +59,12 @@
 //                                   3) sinon le root lui-même (.video_layout / carte)
 //   data-video-no-follow            (sur un élément enfant de la zone) masque le bouton
 //                                   et rend le curseur quand la souris le survole
+//   data-video-tone="light|dark"    (sur n'importe quel bloc) thème du fond sous le bouton
+//                                   qui suit la souris : "light" = fond clair (bouton
+//                                   sombre), "dark" = fond sombre (bouton clair).
+//                                   Sert de repli : si une grande image est sous la souris,
+//                                   ses pixels sont mesurés (l'image doit être servie avec
+//                                   CORS). Sinon, le script lit la couleur de fond CSS.
 
 const PLYR_I18N_FR = {
   play: "Lire",
@@ -81,7 +87,7 @@ const YOUTUBE_OPTIONS = {
 };
 
 const DEFAULT_MAGNET = 0.35;
-const DEFAULT_FOLLOW = 0.18; // lissage du bouton qui suit la souris
+const DEFAULT_FOLLOW = 0.25; // lissage du bouton qui suit la souris (plus petit = plus doux, 1 = instantané)
 const DEFAULT_AUTOPLAY_DELAY = 0; // secondes (0 = dès que la carte est visible)
 const FADE_MS = 350; // doit correspondre à la transition CSS des holders
 const REVEAL_TIMEOUT_MS = 4000; // sécurité lecteur classique
@@ -276,6 +282,8 @@ function initMagnet(scope, mover, anchor, strength) {
 //   ease    : lissage (1 = instantané)
 //   canShow : renvoie false pendant la lecture
 //   onClick : lancé au clic dans la zone (le bouton lui-même ne reçoit pas la souris)
+// Le bouton prend la classe is-tone-light / is-tone-dark selon le fond sous la souris
+// (pixels de l'image sous le curseur, sinon data-video-tone, sinon couleur de fond CSS).
 // Au clavier, le bouton s'affiche au centre de la zone quand il prend le focus.
 function initFollow(scope, mover, anchor, ease, canShow, onClick) {
   if (!scope || !mover || !anchor) return null;
@@ -295,21 +303,159 @@ function initFollow(scope, mover, anchor, ease, canShow, onClick) {
   let my = 0;
   let raf = null;
   let on = false;
-  let seen = false; // une position de souris valide est connue (la souris est dans la fenêtre)
+  let last = 0; // timestamp de la frame précédente
+  let tone = null; // "light" | "dark" | null
 
   mover.classList.add("is-follow");
+
+  // ---- Thème selon le fond ----
+  const LIGHT_THRESHOLD = 0.55; // au-dessus = fond clair (bouton sombre)
+  const SAMPLE_W = 96; // résolution de l'image réduite utilisée pour mesurer
+  const imgCache = new Map(); // src -> { data, w, h, nw, nh }
+
+  // Luminosité perçue d'une couleur "rgb()/rgba()" (0 = noir, 1 = blanc)
+  function luminance(str) {
+    const m = str.match(/rgba?\(([^)]+)\)/);
+    if (!m) return null;
+    const p = m[1]
+      .split(/[\s,/]+/)
+      .filter(Boolean)
+      .map(parseFloat);
+    const a = p.length > 3 ? p[3] : 1;
+    if (a < 0.5) return null; // fond transparent : on continue de remonter
+    return (0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) / 255;
+  }
+
+  // Charge l'image en version réduite (une seule fois) pour lire ses pixels.
+  // Renvoie null tant qu'elle n'est pas prête, ou si le navigateur refuse (CORS).
+  function getSample(img) {
+    const src = img.currentSrc || img.src;
+    if (!src) return null;
+    const cached = imgCache.get(src);
+    if (cached) return cached.data ? cached : null;
+
+    imgCache.set(src, { data: null });
+    const probe = new Image();
+    probe.crossOrigin = "anonymous";
+    probe.onload = () => {
+      try {
+        const w = SAMPLE_W;
+        const h = Math.max(1, Math.round((w * probe.naturalHeight) / probe.naturalWidth));
+        const cv = document.createElement("canvas");
+        cv.width = w;
+        cv.height = h;
+        const ctx = cv.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(probe, 0, 0, w, h);
+        imgCache.set(src, {
+          data: ctx.getImageData(0, 0, w, h).data,
+          w,
+          h,
+          nw: probe.naturalWidth,
+          nh: probe.naturalHeight,
+        });
+        if (on) updateTone();
+      } catch (e) {
+        // canvas "tainted" (CORS) : on retombera sur data-video-tone / la couleur CSS
+      }
+    };
+    probe.src = src;
+    return null;
+  }
+
+  // Thème de l'image à l'endroit exact sous la souris (object-fit: cover, parallax compris)
+  function sampleTone(img, x, y) {
+    const s = getSample(img);
+    if (!s) return null;
+
+    const r = img.getBoundingClientRect(); // inclut les transforms (parallax)
+    if (!r.width || !r.height) return null;
+
+    let u;
+    let v;
+    if (getComputedStyle(img).objectFit === "cover") {
+      const sc = Math.max(r.width / s.nw, r.height / s.nh);
+      const dw = s.nw * sc;
+      const dh = s.nh * sc;
+      u = (x - r.left + (dw - r.width) / 2) / dw;
+      v = (y - r.top + (dh - r.height) / 2) / dh;
+    } else {
+      u = (x - r.left) / r.width;
+      v = (y - r.top) / r.height;
+    }
+    if (u < 0 || u > 1 || v < 0 || v > 1) return null;
+
+    // Moyenne sur une petite zone autour du curseur
+    const px = Math.round(u * (s.w - 1));
+    const py = Math.round(v * (s.h - 1));
+    const rad = 4;
+    let sum = 0;
+    let n = 0;
+    for (let j = Math.max(0, py - rad); j <= Math.min(s.h - 1, py + rad); j++) {
+      for (let i = Math.max(0, px - rad); i <= Math.min(s.w - 1, px + rad); i++) {
+        const k = (j * s.w + i) * 4;
+        sum += (0.299 * s.data[k] + 0.587 * s.data[k + 1] + 0.114 * s.data[k + 2]) / 255;
+        n++;
+      }
+    }
+    return n && sum / n > LIGHT_THRESHOLD ? "light" : "dark";
+  }
+
+  function toneAt(x, y) {
+    // 1) Une grande image sous la souris : on mesure ses pixels
+    const stack = document.elementsFromPoint(x, y); // le bouton a pointer-events: none
+    for (const el of stack) {
+      if (el.tagName !== "IMG") continue;
+      if (el.getBoundingClientRect().width < 200) continue; // ignore icônes / logos
+      const t = sampleTone(el, x, y);
+      if (t) return t;
+      break; // image trouvée mais pas lisible : repli ci-dessous
+    }
+
+    // 2) Repli : data-video-tone, sinon couleur de fond CSS la plus proche
+    let el = stack[0];
+    while (el && el !== document.documentElement) {
+      const t = el.getAttribute("data-video-tone");
+      if (t === "light" || t === "dark") return t;
+      const lum = luminance(getComputedStyle(el).backgroundColor);
+      if (lum !== null) return lum > 0.6 ? "light" : "dark";
+      el = el.parentElement;
+    }
+    return null;
+  }
+
+  function updateTone() {
+    const next = toneAt(mx, my);
+    if (next === tone) return;
+    tone = next;
+    mover.classList.toggle("is-tone-light", tone === "light");
+    mover.classList.toggle("is-tone-dark", tone === "dark");
+  }
 
   function apply() {
     mover.style.setProperty("--fx", `${cx.toFixed(1)}px`);
     mover.style.setProperty("--fy", `${cy.toFixed(1)}px`);
   }
 
-  function render() {
-    cx += (tx - cx) * ease;
-    cy += (ty - cy) * ease;
+  function render(now) {
+    // Lissage indépendant du framerate : même sensation à 60 Hz ou 120 Hz
+    const dt = last ? Math.min(now - last, 64) : 16.67;
+    last = now;
+    const k = 1 - Math.pow(1 - ease, dt / 16.67);
+
+    cx += (tx - cx) * k;
+    cy += (ty - cy) * k;
     apply();
-    const settled = Math.abs(tx - cx) < 0.1 && Math.abs(ty - cy) < 0.1;
-    raf = settled ? null : requestAnimationFrame(render);
+
+    const settled = Math.abs(tx - cx) < 0.05 && Math.abs(ty - cy) < 0.05;
+    if (settled) {
+      cx = tx;
+      cy = ty;
+      apply();
+      raf = null;
+      last = 0;
+    } else {
+      raf = requestAnimationFrame(render);
+    }
   }
 
   // Place le centre de l'icône sous la souris. On retire la translation en cours
@@ -323,6 +469,7 @@ function initFollow(scope, mover, anchor, ease, canShow, onClick) {
       cy = ty;
       apply();
     } else if (!raf) {
+      last = 0;
       raf = requestAnimationFrame(render);
     }
   }
@@ -342,6 +489,7 @@ function initFollow(scope, mover, anchor, ease, canShow, onClick) {
     on = true;
     mover.classList.add("is-follow-visible");
     scope.classList.add("is-follow-cursor");
+    updateTone();
     retarget(first);
   }
 
@@ -351,9 +499,10 @@ function initFollow(scope, mover, anchor, ease, canShow, onClick) {
     if (canShow() && !isInteractive(ev.target)) onClick(ev);
   });
 
-  // Défilement sans bouger la souris : on masque dès que la souris n'est plus dans la zone.
-  // On compare avec le rectangle de la zone (et non elementFromPoint, qui dépend de ce qui
-  // passe au-dessus). capture: true attrape aussi le scroll d'un conteneur interne
+  // Défilement sans bouger la souris : on masque dès que la souris n'est plus dans la zone,
+  // sinon le bouton glisse jusqu'au curseur et le thème est recalculé (le contenu a défilé).
+  // On compare avec le rectangle de la zone (et non elementFromPoint seul, qui dépend de ce
+  // qui passe au-dessus). capture: true attrape aussi le scroll d'un conteneur interne
   // (wrapper, Lenis...), que `scroll` sur window seul ne voit pas.
   const checkOut = () => {
     if (!on) return;
@@ -361,7 +510,9 @@ function initFollow(scope, mover, anchor, ease, canShow, onClick) {
     const inside = mx >= r.left && mx <= r.right && my >= r.top && my <= r.bottom;
     if (!inside || !canShow()) return hide();
     const t = document.elementFromPoint(mx, my);
-    if (t && scope.contains(t) && isInteractive(t)) hide();
+    if (t && scope.contains(t) && isInteractive(t)) return hide();
+    updateTone();
+    retarget(false);
   };
   window.addEventListener("scroll", checkOut, { passive: true, capture: true });
   window.addEventListener("resize", checkOut);
@@ -374,6 +525,7 @@ function initFollow(scope, mover, anchor, ease, canShow, onClick) {
     my = (Math.max(r.top, 0) + Math.min(r.bottom, window.innerHeight)) / 2;
     on = true;
     mover.classList.add("is-follow-visible");
+    updateTone();
     retarget(true);
   });
   mover.addEventListener("blur", hide);
