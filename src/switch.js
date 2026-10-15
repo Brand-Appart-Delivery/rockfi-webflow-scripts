@@ -1,7 +1,7 @@
 // src/switch.js
 // Switch à deux (ou plus) états piloté par data-attributes, avec :
 //  - un fond qui GLISSE derrière le bouton sélectionné ;
-//  - une transition PAR CONTENU : fondu classique, ou glissement latéral (slide).
+//  - une transition PAR CONTENU : fondu classique, glissement latéral (slide), push, ou aucune (none).
 //
 // STRUCTURE :
 //   [data-switch-group="desk"]            conteneur commun (switch + contenus)
@@ -23,7 +23,8 @@
 //   data-switch-param="vue"               synchronise avec l'URL (?vue=client) : lien partageable.
 //   data-switch-duration="0.45"           durée d'entrée des contenus (s). 0 = sans animation.
 //   data-switch-indicator="false"         désactive le fond qui glisse (retour au changement binaire).
-//   data-switch-anim="fade"               transition par défaut des contenus ("fade", "slide" ou "push").
+//   data-switch-anim="fade"               transition par défaut des contenus ("fade", "slide", "push"
+//                                         ou "none" = aucun fondu ni mouvement).
 //   data-switch-distance="10"             distance du slide, en % de la largeur du contenu. Défaut : 10.
 //   data-switch-lock-height               la hauteur du groupe est figée sur celle de la 1re étape
 //                                         (le 1er bouton) : elle ne change plus d'une étape à l'autre.
@@ -36,15 +37,18 @@
 //
 // OPTIONS SUR UN [data-switch-panel] (prioritaires sur celles du groupe) :
 //   data-switch-anim="slide"              ce contenu glisse sur le côté au lieu de fondre.
+//   data-switch-anim="none"               ce contenu s'affiche / se masque sans aucune animation.
 //   data-switch-distance="15"             distance du slide pour ce contenu (% de sa largeur).
 //
 // SENS DU SLIDE : on va vers un bouton situé APRÈS l'actuel → l'ancien contenu sort vers la gauche,
 // le nouveau arrive par la droite. Vers un bouton situé AVANT : l'inverse.
 //
+// "fade"  : fondu simple, sans translation.
 // "slide" : l'ancien contenu sort PUIS le nouveau entre (petit décalage, distance 10 % par défaut).
 // "push"  : croisement SIMULTANÉ : le nouveau contenu prend la place de l'ancien en venant de la
 //           droite pendant que l'ancien part vers la gauche (distance 100 % par défaut). L'ancien
 //           contenu sort du flux (position absolue) le temps de l'animation, au même endroit.
+// "none"  : changement instantané de ce contenu (display seulement).
 //
 // Classes posées en plus : "is-active" + aria-selected sur le bouton actif.
 // Les contenus inactifs reçoivent l'attribut [hidden] (voir switch.scss).
@@ -333,7 +337,12 @@ function initGroup(group) {
       if (!match) {
         if (panel.hidden) return;
 
-        if (canAnimate && type === "push") {
+        if (type === "none") {
+          // Aucune animation : masqué d'un coup
+          release(panel);
+          setVisible(panel, false);
+          if (window.gsap) clearAnimProps(panel);
+        } else if (canAnimate && type === "push") {
           const dist = distanceOf(panel, DEFAULT_PUSH_DISTANCE);
           lift(panel);
           gsap.to(panel, {
@@ -370,7 +379,7 @@ function initGroup(group) {
       // ---------- contenu qui doit apparaître
       const wasHidden = panel.hidden;
 
-      if (!canAnimate) {
+      if (!canAnimate || type === "none") {
         release(panel);
         setVisible(panel, true);
         if (window.gsap) clearAnimProps(panel);
@@ -424,13 +433,13 @@ function initGroup(group) {
         return;
       }
 
-      // Fondu classique : display rétabli avant l'animation
+      // Fondu classique (sans translation) : display rétabli avant l'animation
       setVisible(panel, true);
       if (wasHidden) {
         gsap.fromTo(
           panel,
-          { opacity: 0, y: 12 },
-          { opacity: 1, y: 0, duration, ease: "power2.out", clearProps: "opacity,transform" },
+          { opacity: 0 },
+          { opacity: 1, duration, ease: "power2.out", clearProps: "opacity" },
         );
       }
     });
