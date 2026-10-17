@@ -104,3 +104,23 @@
     pointer-events: none;
   }
 }
+
+.toast-copy {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translate(-50%, 12px);
+  padding: 12px 20px;
+  border-radius: 999px;
+  background: #141413;
+  color: #fff;
+  font-size: 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease, transform .2s ease;
+  z-index: 1000;
+}
+.toast-copy.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}

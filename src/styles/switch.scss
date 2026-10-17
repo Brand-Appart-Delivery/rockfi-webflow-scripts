@@ -1,6 +1,18 @@
 // src/styles/switch.scss
 // Switch piloté par data-attributes (voir src/switch.js)
 
+// ---- Propriétés animables pour le fondu des bords ----
+@property --fade-l {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --fade-r {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
 // ---- Contenus : les panneaux inactifs sont cachés (les classes flex-v écrasent [hidden]) ----
 [data-switch-panel][hidden] {
   display: none !important;
@@ -12,9 +24,92 @@
   overflow-x: clip;
 }
 
+// ---- Switch scrollable, pleine largeur d'écran ----
+// Le parent direct du wrapper est contraint à la largeur disponible,
+// sinon il prend la largeur du switch (nowrap) et déborde du conteneur.
+:has(> .switch_scroll) {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+// Le wrapper sort du padding-global pour que le scroll et le fondu
+// se fassent aux bords de l'écran, et pas à ceux du contenu.
+.switch_scroll {
+  --pg: 2rem; // = padding-global desktop
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+
+  @media (max-width: 767px) {
+    --pg: 1.25rem; // = padding-global mobile
+  }
+
+  @media (max-width: 991px) {
+    // Bord à bord (fonctionne dans un parent block, flex colonne ou flex ligne)
+    width: calc(100% + var(--pg) * 2);
+    max-width: none;
+    margin-inline: calc(var(--pg) * -1);
+    padding-inline: var(--pg);
+
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    // Fondu sur les côtés coupés (posé par le JS : has-fade-left / has-fade-right)
+    --fade-l: 0px;
+    --fade-r: 0px;
+    --fade-size: 2.5rem;
+
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--fade-l),
+      #000 calc(100% - var(--fade-r)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 var(--fade-l),
+      #000 calc(100% - var(--fade-r)),
+      transparent 100%
+    );
+    transition:
+      --fade-l 0.3s ease,
+      --fade-r 0.3s ease;
+
+    &.has-fade-left {
+      --fade-l: var(--fade-size);
+    }
+    &.has-fade-right {
+      --fade-r: var(--fade-size);
+    }
+  }
+}
+
+// Le switch garde sa largeur naturelle (pas de wrap)
+.switch_scroll > .switch {
+  width: max-content;
+  max-width: none;
+  margin-inline: auto; // centré si ça tient, aligné à gauche et scrollable si ça déborde
+}
+
+.switch_item {
+  flex: none;
+  white-space: nowrap;
+}
+
 // ---- Fond qui glisse derrière le bouton sélectionné ----
 .has-switch-indicator {
   position: relative;
+  flex-wrap: nowrap;
 }
 
 .switch_indicator {
@@ -58,6 +153,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .switch_scroll,
   .switch_indicator.is-animated,
   .has-switch-indicator [data-switch-btn] {
     transition: none;
