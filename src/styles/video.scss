@@ -319,6 +319,50 @@ $hero-ratio-h: 40;
   }
 }
 
+// ---- Mode hero (data-video-hero) : vidéo qui démarre sans Plyr ----
+// Le JS ajoute .video_hero-holder dans le bloc [data-video-player]. Le poster reste dessous ;
+// la vidéo apparaît en fondu (opacity posée par le JS) dès que la lecture a démarré.
+// Iframe Vimeo / YouTube : taille fixe + scale (--cover-w / --cover-h / --cover-scale, posés
+// par initCoverFit avec le ratio data-video-ratio, 89/40 par défaut).
+[data-nav-hero] .video_hero-holder,
+[data-video-hero] .video_hero-holder {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  background: transparent;
+
+  video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  iframe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: var(--cover-w, 1920px);
+    height: var(--cover-h, 1080px);
+    border: 0;
+    transform: translate(-50%, -50%) scale(var(--cover-scale, 1));
+    transform-origin: center center;
+    will-change: transform;
+  }
+}
+
+// Poster du hero : cover, sous la vidéo
+[data-nav-hero] .img_wrapper > img[data-hero-parallax] {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 // ---- Vidéo en fond de n'importe quelle section (data-video-bg) ----
 // Le wrapper [data-video-player][data-video-autoplay][data-video-bg] est une couche absolue
 // qui remplit la section parente. Le cover est fluide : l'iframe garde une taille fixe

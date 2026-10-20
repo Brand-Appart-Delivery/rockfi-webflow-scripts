@@ -47,12 +47,26 @@ function buildProgressSteps(progressEl, count) {
   return steps;
 }
 
+// Remplace {name} par le prénom dans le CTA d'une carte (cas d'une carte unique, sans slider)
+function fillCtaName(card) {
+  const ctaText = card.querySelector(CTA_TEXT_SELECTOR);
+  if (!ctaText || !ctaText.textContent.includes("{name}")) return;
+  const { firstName } = extractSlide(card);
+  ctaText.textContent = ctaText.textContent.replace("{name}", firstName);
+}
+
 export function initFocusStories(root = document) {
   const sections = root.querySelectorAll(".section_focus");
 
   sections.forEach((section) => {
     const cards = Array.from(section.querySelectorAll(".focus-card"));
-    if (cards.length < 2) return; // rien à faire défiler avec 0 ou 1 carte
+    if (cards.length === 0) return;
+
+    // Une seule carte : rien à faire défiler, mais on remplit quand même {name}
+    if (cards.length === 1) {
+      fillCtaName(cards[0]);
+      return;
+    }
 
     const duration = parseFloat(section.dataset.focusDuration) || 5; // secondes
     const transitionDuration = parseFloat(section.dataset.focusTransition) || 0.6; // secondes

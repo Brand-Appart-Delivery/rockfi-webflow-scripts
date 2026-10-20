@@ -1,6 +1,7 @@
 // src/video-section.js
 // Rend fonctionnelle la section vidéo (keynote, événement...) ET les cartes
-// (personas, presse...) : une vidéo par carte.
+// (personas, presse...) : une vidéo par carte. Inclut un mode HERO (fond vidéo
+// qui démarre tout de suite, sans Plyr) et un préchauffage du lecteur avant le clic.
 //
 // 1) SECTION :
 //   .video_media[data-video-player="URL"]   conteneur + URL (mp4, YouTube, Vimeo)
@@ -25,6 +26,33 @@
 // sur leur aperçu / poster. À la fin d'une vidéo, on revient à l'aperçu ou au
 // poster (évite l'écran de fin "autres vidéos" de Vimeo).
 //
+// ---------------------------------------------------------------------------
+// NOUVEAU : MODE HERO  (data-video-hero)
+// ---------------------------------------------------------------------------
+//   Sur l'élément qui porte data-video-player (ex. .img_wrapper du hero) :
+//     data-video-hero                 active le mode hero : la vidéo démarre dès le
+//                                     chargement de la page, muette, en boucle, sans Plyr
+//                                     ni bouton. Le poster reste dessous jusqu'à la lecture
+//                                     réelle puis la vidéo apparaît en fondu.
+//     data-video-hero-mp4="URL.mp4"   (recommandé) fichier MP4/WebM optimisé : démarrage le
+//                                     plus rapide, prioritaire sur data-video-player.
+//     data-video-hero-min-width="768" en dessous de cette largeur (px), on garde le poster
+//                                     (économie de données sur mobile). Défaut : 0 = toujours.
+//     data-video-ratio="16/9"         ratio réel (embeds Vimeo / YouTube).
+//     data-video-autoplay-start="12"  seconde de départ de la boucle.
+//   Désactivé automatiquement avec prefers-reduced-motion et le mode économie de données.
+//
+// ---------------------------------------------------------------------------
+// NOUVEAU : PRÉCHAUFFAGE  (lecteur classique)
+// ---------------------------------------------------------------------------
+//   data-video-prewarm="hover"     (défaut) au survol / toucher / focus, le lecteur est créé
+//                                  en coulisses : au clic, la lecture est instantanée et reste
+//                                  dans le geste utilisateur (pas de blocage Safari / iOS).
+//   data-video-prewarm="visible"   idem, dès que l'élément approche de l'écran (300 px).
+//   data-video-prewarm="false"     désactivé (ancien comportement : création au clic).
+//   Un loader (.video_loader) s'affiche entre le clic et le premier "playing".
+//
+// ---------------------------------------------------------------------------
 // Options (data-attributes, facultatives) :
 //   data-video-autoplay             aperçu muet en boucle, visible à l'écran ;
 //                                   un clic relance la vidéo depuis le début avec
@@ -32,11 +60,12 @@
 //   data-video-autoplay-start="12"  l'aperçu commence (et reboucle) à 12 s. Défaut : 0.
 //   data-video-autoplay-delay="0"   délai (secondes) entre l'arrivée à l'écran et le
 //                                   début de l'aperçu. Défaut : 0 (immédiat).
-//   data-video-bg                   fond vidéo (hero, section...) : cover fluide au resize, et
+//   data-video-bg                   fond vidéo (section...) : cover fluide au resize, et
 //                                   l'aperçu n'apparaît que quand la lecture a vraiment démarré
 //                                   (pas de timeout : le visuel de secours reste dessous, le
 //                                   loader du lecteur n'est jamais montré). À combiner avec
 //                                   data-video-autoplay. Voir video.scss ([data-video-bg]).
+//                                   Pour un hero, préférer data-video-hero (plus rapide).
 //   data-video-ratio="16/9"         ratio réel de la vidéo (avec data-video-bg). Défaut : 16/9.
 //   data-video-host                 (sur un élément enfant) accueille le lecteur à la
 //                                   place de la carte entière ; prioritaire sur le reste
@@ -93,6 +122,40 @@ const FADE_MS = 350; // doit correspondre à la transition CSS des holders
 const REVEAL_TIMEOUT_MS = 4000; // sécurité lecteur classique
 const PREVIEW_REVEAL_TIMEOUT_MS = 2500; // sécurité aperçu (désactivée avec data-video-bg)
 const COVER_BASE_W = 1920; // largeur fixe de l'iframe en mode fond (mise à l'échelle par transform)
+const PREWARM_MARGIN = "300px"; // distance d'approche pour data-video-prewarm="visible"
+const HERO_FADE_MS = 0; // 0 = apparition instantanée de la vidéo hero (sans fondu)
+const HERO_EMBED_REVEAL_MS = 1200; // délai de secours après "load" d'un embed hero (sans événement fiable)
+const HERO_DEFAULT_RATIO = "89/40"; // ratio de la vidéo du hero (même valeur que $hero-ratio dans video.scss)
+const HERO_VIMEO_FALLBACK_MS = 1800; // secours Vimeo si le SDK n'émet jamais "playing"
+
+// ---------------------------------------------------------------------------
+// Utilitaires
+// ---------------------------------------------------------------------------
+function prefersReducedMotion() {
+  return Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
+function saveDataEnabled() {
+  const c = navigator.connection;
+  return Boolean(c && c.saveData);
+}
+
+// Styles minimaux injectés une seule fois (loader du lecteur classique)
+let stylesInjected = false;
+function ensureStyles() {
+  if (stylesInjected || typeof document === "undefined") return;
+  stylesInjected = true;
+  const style = document.createElement("style");
+  style.setAttribute("data-video-section-style", "");
+  style.textContent = `
+.video_loader{position:absolute;inset:0;display:grid;place-items:center;z-index:3;pointer-events:none;opacity:0;animation:video-loader-in .2s ease .15s forwards}
+.video_loader::after{content:"";width:44px;height:44px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;animation:video-loader-spin .8s linear infinite}
+@keyframes video-loader-in{to{opacity:1}}
+@keyframes video-loader-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.video_loader::after{animation-duration:2s}}
+`;
+  document.head.appendChild(style);
+}
 
 function getVideoInfo(src) {
   const s = (src || "").trim();
@@ -124,6 +187,42 @@ function getVideoInfo(src) {
   }
 
   return { type: "native", id: null, hash: "", url: s };
+}
+
+// Préchauffe le fournisseur (YouTube / Vimeo) : preconnect + preload de l'API.
+// Une seule fois par fournisseur. Sans effet pour un fichier natif.
+const warmedProviders = new Set();
+function warmProvider(src) {
+  const { type } = getVideoInfo(src);
+  if (warmedProviders.has(type)) return;
+
+  const map = {
+    youtube: {
+      script: "https://www.youtube.com/iframe_api",
+      origins: ["https://www.youtube-nocookie.com", "https://www.youtube.com", "https://i.ytimg.com"],
+    },
+    vimeo: {
+      script: "https://player.vimeo.com/api/player.js",
+      origins: ["https://player.vimeo.com", "https://i.vimeocdn.com", "https://f.vimeocdn.com"],
+    },
+  };
+  const conf = map[type];
+  if (!conf) return;
+  warmedProviders.add(type);
+
+  conf.origins.forEach((href) => {
+    const l = document.createElement("link");
+    l.rel = "preconnect";
+    l.href = href;
+    l.crossOrigin = "anonymous";
+    document.head.appendChild(l);
+  });
+
+  const pre = document.createElement("link");
+  pre.rel = "preload";
+  pre.as = "script";
+  pre.href = conf.script;
+  document.head.appendChild(pre);
 }
 
 // preview = true : version muette sans sous-titres (aperçu autoplay)
@@ -541,7 +640,8 @@ function initFollow(scope, mover, anchor, ease, canShow, onClick) {
 // Cover fluide pour un fond vidéo (Vimeo / YouTube) :
 // l'iframe garde une taille fixe (COVER_BASE_W × hauteur selon le ratio) et on la met à l'échelle
 // avec transform (GPU) pour remplir le cadre. Pas de relayout de l'iframe au resize = fluide.
-// Variables posées sur l'élément : --cover-w, --cover-h, --cover-scale (lues par video.scss).
+// Variables posées sur l'élément : --cover-w, --cover-h, --cover-scale (lues par video.scss
+// en mode data-video-bg, et par le mode hero ci-dessous).
 function initCoverFit(el) {
   const [rw, rh] = (el.dataset.videoRatio || "16/9").split("/").map(Number);
   const ratioW = rw > 0 ? rw : 16;
@@ -582,6 +682,7 @@ function claimPlayback(stop) {
 //   host    : élément dans lequel le lecteur est inséré (au-dessus du poster)
 //   trigger : bouton (groupe) qui lance la vidéo et qui bouge au magnétisme
 //   bg      : mode fond vidéo (pas de timeout d'affichage de l'aperçu)
+//   prewarm : "hover" | "visible" | "off" (création du lecteur avant le clic)
 // ---------------------------------------------------------------------------
 function setupPlayback({
   root,
@@ -598,8 +699,10 @@ function setupPlayback({
   autoplay,
   autoplayDelay,
   autoplayStart,
+  prewarm = "hover",
   bg = false,
 }) {
+  ensureStyles();
   loadDuration(src, timerEl, duration);
 
   // Tout le groupe bouge, mais la réaction part de l'icône ronde,
@@ -609,8 +712,10 @@ function setupPlayback({
   // data-video-follow remplace le magnétisme
   if (!follow) initMagnet(magnetScope, trigger, playBtn, magnet);
 
-  let holder = null;
+  let holder = null; // lecteur actif (en lecture)
   let player = null;
+  let warm = null; // lecteur préchauffé, prêt mais pas encore lancé : { holder, player, target, ready }
+  let loaderEl = null;
   let revealTimer = null;
   let cleanupTimer = null;
 
@@ -642,6 +747,24 @@ function setupPlayback({
   // preventDefault seulement : Plyr doit continuer à recevoir ses clics.
   function blockLink(ev) {
     if (holder && holder.contains(ev.target)) ev.preventDefault();
+  }
+
+  // ---- Loader (entre le clic et le premier "playing") ----
+  function showLoader() {
+    if (loaderEl) return;
+    loaderEl = document.createElement("span");
+    loaderEl.className = "video_loader";
+    loaderEl.setAttribute("aria-hidden", "true");
+    host.appendChild(loaderEl);
+    root.classList.add("is-loading");
+  }
+
+  function hideLoader() {
+    if (loaderEl) {
+      loaderEl.remove();
+      loaderEl = null;
+    }
+    root.classList.remove("is-loading");
   }
 
   // ---- Aperçu muet ----
@@ -809,12 +932,72 @@ function setupPlayback({
   }
 
   // ---- Lecteur classique ----
+
+  // Crée le lecteur en coulisses (invisible, non cliquable) sans lancer la lecture.
+  // Appelé au survol / à l'approche (préchauffage) ou, à défaut, au clic.
+  function prepare() {
+    if (warm) return warm;
+
+    const h = document.createElement("div");
+    // Invisible (opacity 0 en CSS) jusqu'à ce que la lecture démarre vraiment
+    h.className = "video_player-holder swiper-no-swiping";
+    h.style.pointerEvents = "none"; // retiré au démarrage
+    h.innerHTML = buildPlayerMarkup(src, captions, title);
+    host.appendChild(h);
+
+    const target = h.firstElementChild;
+    const w = { holder: h, player: null, target, ready: false };
+    warm = w;
+
+    // Plyr indisponible : lecteur natif
+    if (typeof window.Plyr === "undefined") {
+      if (target.tagName === "VIDEO") target.controls = true;
+      w.ready = true;
+      return w;
+    }
+
+    const hasCaptions = Boolean(h.querySelector("track"));
+    const pl = new window.Plyr(target, {
+      controls: [
+        "play",
+        "progress",
+        "current-time",
+        "mute",
+        "volume",
+        ...(hasCaptions ? ["captions"] : []),
+        "fullscreen",
+      ],
+      i18n: PLYR_I18N_FR,
+      youtube: YOUTUBE_OPTIONS,
+    });
+    w.player = pl;
+
+    pl.once("ready", () => {
+      w.ready = true;
+    });
+    pl.on("loadedmetadata", () => setTimer(timerEl, formatDuration(pl.duration)));
+    // Fin de lecture : retour à l'aperçu / au poster (évite l'écran "autres vidéos" de Vimeo)
+    pl.on("ended", () => {
+      if (player === pl) stop();
+    });
+
+    return w;
+  }
+
+  // Préchauffage : API du fournisseur + lecteur créé en coulisses
+  function warmUp() {
+    if (holder || warm) return;
+    warmProvider(src);
+    prepare();
+  }
+
   // Remet l'aperçu (ou le poster) : détruit le lecteur, retire le conteneur
   function stop() {
     clearTimeout(revealTimer);
     clearTimeout(cleanupTimer);
     revealTimer = null;
     cleanupTimer = null;
+    hideLoader();
 
     if (player) {
       try {
@@ -849,11 +1032,15 @@ function setupPlayback({
     clearPreviewTimer();
     root.classList.add("is-playing");
 
-    holder = document.createElement("div");
-    // Invisible (opacity 0 en CSS) jusqu'à ce que la lecture démarre vraiment
-    holder.className = "video_player-holder swiper-no-swiping";
-    holder.innerHTML = buildPlayerMarkup(src, captions, title);
-    host.appendChild(holder);
+    // Lecteur préchauffé si disponible, sinon créé maintenant
+    const w = prepare();
+    warm = null;
+    holder = w.holder;
+    player = w.player;
+    holder.style.pointerEvents = "";
+
+    // Retour visuel immédiat entre le clic et le premier "playing"
+    showLoader();
 
     // Le lecteur peut se trouver dans un <a> : aucun clic dedans ne doit ouvrir le lien
     root.addEventListener("click", blockLink, true);
@@ -869,6 +1056,7 @@ function setupPlayback({
       if (revealed || holder !== h) return;
       revealed = true;
       clearTimeout(revealTimer);
+      hideLoader();
       h.classList.add("is-ready");
       cleanupTimer = setTimeout(() => {
         cleanupTimer = null;
@@ -877,10 +1065,10 @@ function setupPlayback({
     };
     revealTimer = setTimeout(reveal, REVEAL_TIMEOUT_MS);
 
-    const target = holder.firstElementChild;
+    const target = w.target;
 
     // Plyr indisponible : lecteur natif
-    if (typeof window.Plyr === "undefined") {
+    if (!player) {
       if (target.tagName === "VIDEO") {
         target.controls = true;
         target.addEventListener("playing", reveal, { once: true });
@@ -890,34 +1078,25 @@ function setupPlayback({
       return;
     }
 
-    const hasCaptions = Boolean(holder.querySelector("track"));
-    player = new window.Plyr(target, {
-      controls: [
-        "play",
-        "progress",
-        "current-time",
-        "mute",
-        "volume",
-        ...(hasCaptions ? ["captions"] : []),
-        "fullscreen",
-      ],
-      i18n: PLYR_I18N_FR,
-      youtube: YOUTUBE_OPTIONS,
-    });
+    const pl = player;
+    pl.once("playing", reveal);
 
-    player.once("playing", reveal);
     // Sans aperçu en dessous : le lecteur Plyr (fond noir + contrôles) s'affiche dès qu'il est
     // prêt, sans attendre le premier "playing". Avec un aperçu, on attend "playing"
     // pour ne pas remplacer l'aperçu par un écran noir.
-    if (!previewHolder) player.once("ready", reveal);
+    if (!previewHolder) {
+      if (w.ready) reveal();
+      else pl.once("ready", reveal);
+    }
 
-    if (isNative) player.play();
-    else player.once("ready", () => player.play());
+    const play = () => {
+      const p = pl.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    };
 
-    player.on("loadedmetadata", () => setTimer(timerEl, formatDuration(player.duration)));
-
-    // Fin de lecture : retour à l'aperçu / au poster (évite l'écran "autres vidéos" de Vimeo)
-    player.on("ended", () => stop());
+    // Lecteur déjà prêt (préchauffé) : play() part directement dans le geste utilisateur
+    if (isNative || w.ready) play();
+    else pl.once("ready", play);
   }
 
   [trigger, ...extraTriggers].filter(Boolean).forEach((btn) => {
@@ -931,6 +1110,29 @@ function setupPlayback({
       }
     });
   });
+
+  // ---- Préchauffage avant le clic ----
+  if (prewarm !== "off") {
+    // Dans tous les cas : survol, toucher ou focus clavier déclenchent la création
+    root.addEventListener("pointerenter", warmUp, { passive: true });
+    root.addEventListener("touchstart", warmUp, { passive: true });
+    root.addEventListener("focusin", warmUp);
+
+    // "visible" : dès que l'élément approche de l'écran
+    if (prewarm === "visible" && typeof IntersectionObserver !== "undefined") {
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+          io.disconnect();
+          // On attend un moment d'inactivité pour ne pas gêner le rendu
+          if (typeof requestIdleCallback === "function") requestIdleCallback(warmUp, { timeout: 1500 });
+          else setTimeout(warmUp, 200);
+        },
+        { rootMargin: PREWARM_MARGIN, threshold: 0 },
+      );
+      io.observe(root);
+    }
+  }
 
   // Aperçu : lancé/mis en pause selon la visibilité à l'écran
   if (autoplay) {
@@ -951,6 +1153,203 @@ function setupPlayback({
   }
 }
 
+// ---------------------------------------------------------------------------
+// MODE HERO : fond vidéo muet qui démarre tout de suite, sans Plyr ni bouton
+//   - MP4 / WebM natif (data-video-hero-mp4 ou data-video-player en .mp4) : le plus rapide
+//   - Vimeo : iframe directe en mode background (autoplay), événements via le SDK Vimeo
+//   - YouTube : iframe directe nocookie, muette, en boucle
+// Le poster reste dessous ; la vidéo apparaît en fondu dès que la lecture a démarré.
+// ---------------------------------------------------------------------------
+function initHero(media) {
+  const embedSrc = media.dataset.videoPlayer || "";
+  const mp4 = (media.dataset.videoHeroMp4 || "").trim();
+  const src = mp4 || embedSrc;
+  if (!src) return;
+
+  // Respect des préférences utilisateur / économie de données / petits écrans
+  if (prefersReducedMotion() || saveDataEnabled()) return;
+  const minW = parseFloat(media.dataset.videoHeroMinWidth);
+  if (isFinite(minW) && minW > 0 && window.innerWidth < minW) return;
+
+  const root = media.closest(".video_layout") || media.parentElement;
+  const info = getVideoInfo(src);
+  const startAt = readAutoplayStart(media);
+
+  // Dès maintenant : on prépare la connexion vers le fournisseur
+  warmProvider(src);
+
+  const holder = document.createElement("div");
+  holder.className = "video_hero-holder";
+  holder.setAttribute("aria-hidden", "true");
+  Object.assign(holder.style, {
+    position: "absolute",
+    top: "0",
+    left: "0",
+    width: "100%",
+    height: "100%",
+    overflow: "hidden",
+    opacity: "0",
+    transition: HERO_FADE_MS > 0 ? `opacity ${HERO_FADE_MS}ms ease` : "none",
+    pointerEvents: "none",
+  });
+
+  let revealed = false;
+  const reveal = () => {
+    if (revealed) return;
+    revealed = true;
+    holder.style.opacity = "1";
+    root.classList.add("is-previewing");
+  };
+
+  // Pause hors écran : fonctions renseignées selon le type de vidéo
+  let pauseFn = null;
+  let resumeFn = null;
+
+  if (info.type === "native") {
+    const v = document.createElement("video");
+    v.muted = true;
+    v.defaultMuted = true;
+    v.setAttribute("muted", "");
+    v.playsInline = true;
+    v.setAttribute("playsinline", "");
+    v.autoplay = true;
+    v.loop = startAt <= 0;
+    v.preload = "auto";
+    Object.assign(v.style, {
+      display: "block",
+      width: "100%",
+      height: "100%",
+      objectFit: "cover",
+    });
+    v.addEventListener("playing", reveal, { once: true });
+    // Boucle avec point de départ : on reboucle à la main
+    if (startAt > 0) {
+      v.addEventListener("ended", () => {
+        v.currentTime = startAt;
+        v.play().catch(() => {});
+      });
+    }
+    v.src = `${info.url}${startAt > 0 ? `#t=${startAt}` : ""}`;
+    holder.appendChild(v);
+    media.appendChild(holder);
+
+    const p = v.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+
+    pauseFn = () => v.pause();
+    resumeFn = () => {
+      const r = v.play();
+      if (r && typeof r.catch === "function") r.catch(() => {});
+    };
+  } else if (info.type === "vimeo" || info.type === "youtube") {
+    // Cover fluide : l'iframe a une taille fixe, mise à l'échelle par transform
+    if (!media.dataset.videoRatio) media.dataset.videoRatio = HERO_DEFAULT_RATIO;
+    initCoverFit(media);
+
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("allow", "autoplay; encrypted-media; picture-in-picture");
+    iframe.setAttribute("tabindex", "-1");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.setAttribute("loading", "eager");
+    iframe.title = media.dataset.videoTitle || "Vidéo d'arrière-plan";
+    Object.assign(iframe.style, {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      width: "var(--cover-w, 1920px)",
+      height: "var(--cover-h, 1080px)",
+      border: "0",
+      transform: "translate(-50%, -50%) scale(var(--cover-scale, 1))",
+      transformOrigin: "center center",
+      pointerEvents: "none",
+    });
+
+    if (info.type === "vimeo") {
+      const params = new URLSearchParams({
+        background: "1", // aucune interface, lecture automatique, muet, en boucle
+        autoplay: "1",
+        muted: "1",
+        loop: "1",
+        autopause: "0",
+        playsinline: "1",
+        dnt: "1",
+      });
+      if (info.hash) params.set("h", info.hash);
+      iframe.src = `https://player.vimeo.com/video/${info.id}?${params.toString()}`;
+
+      holder.appendChild(iframe);
+      media.appendChild(holder);
+
+      // Le SDK Vimeo donne un "playing" fiable ; on le charge s'il n'est pas encore là
+      let fallback = null;
+      const bindSdk = () => {
+        try {
+          const vp = new window.Vimeo.Player(iframe);
+          const done = () => {
+            clearTimeout(fallback);
+            reveal();
+          };
+          vp.on("playing", done);
+          vp.on("timeupdate", done);
+          pauseFn = () => vp.pause().catch(() => {});
+          resumeFn = () => vp.play().catch(() => {});
+        } catch (e) {}
+      };
+      iframe.addEventListener(
+        "load",
+        () => {
+          fallback = setTimeout(reveal, HERO_VIMEO_FALLBACK_MS);
+          if (window.Vimeo && typeof window.Vimeo.Player === "function") bindSdk();
+          else {
+            const sc = document.createElement("script");
+            sc.src = "https://player.vimeo.com/api/player.js";
+            sc.async = true;
+            sc.onload = () => window.Vimeo && bindSdk();
+            document.head.appendChild(sc);
+          }
+        },
+        { once: true },
+      );
+    } else {
+      const id = info.id;
+      const params = new URLSearchParams({
+        autoplay: "1",
+        mute: "1",
+        controls: "0",
+        loop: "1",
+        playlist: id, // requis par YouTube pour que loop fonctionne
+        playsinline: "1",
+        modestbranding: "1",
+        rel: "0",
+        disablekb: "1",
+        iv_load_policy: "3",
+        fs: "0",
+      });
+      iframe.src = `https://www.youtube-nocookie.com/embed/${id}?${params.toString()}`;
+      iframe.addEventListener("load", () => setTimeout(reveal, HERO_EMBED_REVEAL_MS), { once: true });
+
+      holder.appendChild(iframe);
+      media.appendChild(holder);
+    }
+  } else {
+    return;
+  }
+
+  // Pause quand le hero sort de l'écran (économie CPU / batterie)
+  if (pauseFn && typeof IntersectionObserver !== "undefined") {
+    new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) resumeFn && resumeFn();
+        else pauseFn && pauseFn();
+      },
+      { threshold: 0 },
+    ).observe(root);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Lecture des options
+// ---------------------------------------------------------------------------
 function readMagnet(el) {
   return el.dataset.videoMagnet !== undefined ? parseFloat(el.dataset.videoMagnet) : DEFAULT_MAGNET;
 }
@@ -969,9 +1368,7 @@ function readFollow(el) {
 function readAutoplay(el) {
   const v = el.dataset.videoAutoplay;
   if (v === undefined || v === "false") return false;
-  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    return false;
-  }
+  if (prefersReducedMotion()) return false;
   return true;
 }
 
@@ -992,10 +1389,30 @@ function readBg(el) {
   return el.dataset.videoBg !== undefined && el.dataset.videoBg !== "false";
 }
 
+// Mode hero : actif si data-video-hero est présent (et != "false")
+function readHero(el) {
+  return el.dataset.videoHero !== undefined && el.dataset.videoHero !== "false";
+}
+
+// Préchauffage : "hover" (défaut) | "visible" | "off"
+function readPrewarm(el) {
+  const v = el.dataset.videoPrewarm;
+  if (v === undefined) return "hover";
+  if (v === "false" || v === "off") return "off";
+  if (v === "visible") return "visible";
+  return "hover";
+}
+
 // Section principale
 function initOne(media) {
-  const src = media.dataset.videoPlayer;
+  const src = media.dataset.videoPlayer || media.dataset.videoHeroMp4;
   if (!src) return;
+
+  // Mode hero : pas de bouton, pas de Plyr
+  if (readHero(media)) {
+    initHero(media);
+    return;
+  }
 
   const bg = readBg(media);
   if (bg) initCoverFit(media);
@@ -1021,6 +1438,7 @@ function initOne(media) {
     autoplay: readAutoplay(media),
     autoplayDelay: readAutoplayDelay(media),
     autoplayStart: readAutoplayStart(media),
+    prewarm: readPrewarm(media),
     bg,
   });
 }
@@ -1047,11 +1465,12 @@ function initCard(card) {
     autoplay: readAutoplay(card),
     autoplayDelay: readAutoplayDelay(card),
     autoplayStart: readAutoplayStart(card),
+    prewarm: readPrewarm(card),
   });
 }
 
 export function initVideoSection(root = document) {
-  // Section principale (les cartes sont exclues)
+  // Section principale + hero (les cartes sont exclues)
   root
     .querySelectorAll("[data-video-player]:not([data-video-ready]):not([data-video-card])")
     .forEach((media) => {
