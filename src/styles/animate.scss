@@ -1,4 +1,52 @@
-[data-inview]:not(.--visible),
+// Masqué jusqu'à l'animation. Exception : les compteurs, visibles dès que
+// le script les a préparés au chargement (ils affichent « 0 » par-dessus le
+// vrai chiffre, voir .is-counting) : pas d'apparition brusque au scroll.
+[data-inview]:not(.--visible):not(.is-counting),
 [data-text-reveal]:not(.--visible) {
   opacity: 0;
+}
+
+// Grilles (data-grid-reveal) : items masqués dès le premier affichage, avant
+// que le script ne les anime (voir scan.js). Avec data-anim-target, seul cet
+// élément est masqué.
+[data-grid-reveal] > :is(.w-dyn-item, [data-anim-item]):not(.--visible):not(:has([data-anim-target])),
+[data-grid-reveal] [data-anim-target]:not(.--visible) {
+  opacity: 0;
+}
+
+// Animations réduites (réglage système) : le script ne lance aucune
+// animation, le contenu doit donc être visible directement.
+@media (prefers-reduced-motion: reduce) {
+  [data-inview],
+  [data-text-reveal],
+  [data-grid-reveal] > *,
+  [data-grid-reveal] [data-anim-target] {
+    opacity: 1 !important;
+  }
+}
+
+// ---- Compteurs (preset count-up) ----
+// Le vrai chiffre reste dans le HTML (lu par les crawlers et les LLM) : on le
+// rend transparent pendant l'animation et le chiffre animé s'affiche
+// par-dessus via ::after, sans être ajouté au texte de la page.
+.is-counting {
+  position: relative;
+  -webkit-text-fill-color: transparent;
+
+  &::after {
+    content: attr(data-count-display);
+    content: attr(data-count-display) / ""; // ignoré des lecteurs d'écran
+    position: absolute;
+    inset: 0;
+    padding: inherit;
+    // Toujours sur une ligne : un chiffre en cours (« 0 ») peut être plus
+    // large que le final (« 1 ») et ne doit pas passer à la ligne. En flex,
+    // un texte trop large déborde des deux côtés quand il est centré, donc
+    // l'alignement reste celui du vrai texte (--count-justify, posé en JS).
+    display: flex;
+    justify-content: var(--count-justify, flex-start);
+    white-space: nowrap;
+    -webkit-text-fill-color: currentColor;
+    pointer-events: none;
+  }
 }

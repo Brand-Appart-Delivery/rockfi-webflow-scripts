@@ -7,6 +7,7 @@ import { initBlogAccordion } from "./blog-accordion.js";
 import { initShareToast } from "./share-toast.js";
 import { init as initBlogToc } from "./blog-toc.js";
 import { initEmbeds } from "./embeds/index.js";
+import { initCompareTable } from "./compare-table.js";
 import { initBlogFaq } from "./blog-faq.js";
 import { initSchema } from "./schema/index.js";
 import { initAnimations } from "./animate/index.js";
@@ -41,6 +42,7 @@ onReady(() => {
   initBlogFaq();
   initShareToast();
   initEmbeds();
+  initCompareTable();
   initBlogToc();
   initAnimations();
   initSwitch();

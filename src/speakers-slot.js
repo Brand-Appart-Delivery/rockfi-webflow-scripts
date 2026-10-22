@@ -1,3 +1,5 @@
+import { requestScrollRefresh } from "./utils/scroll-refresh.js";
+
 const TAG = /\[\s*speakers_list\s*\/?\s*\]/i;
 const clean = (s) => s.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, " ");
 
@@ -64,5 +66,5 @@ export function initSpeakersSlot() {
   section.classList.add("is-placed"); // display: block (voir CSS)
   revealRowByRow(section);
 
-  if (window.ScrollTrigger) window.ScrollTrigger.refresh();
+  requestScrollRefresh();
 }

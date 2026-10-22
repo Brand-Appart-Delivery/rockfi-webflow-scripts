@@ -16,7 +16,10 @@ import { transformSlider, initSliderListeners } from "./slider-enhance.js";
 import { transformVideo, initVideoListeners } from "./video-enhance.js";
 
 export function initEmbeds(root = document) {
-  const contentEl = root.querySelector(".rich-text_blog");
+  // Le tableau comparatif a son propre module (src/compare-table.js).
+  const contentEl = root.querySelector(
+    ".rich-text_blog:not([data-compare-table])",
+  );
   if (!contentEl) return;
 
   let html = contentEl.innerHTML;

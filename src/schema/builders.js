@@ -1,5 +1,6 @@
 // src/schema/builders.js
-import { parseFrDate, getIsoDate, getFaqEntities } from "./utils.js";
+import { parseDate, getIsoDate, getFaqEntities } from "./utils.js";
+import { getLocaleTag } from "../utils/i18n.js";
 
 const ORG_REF = {
   "@type": "Organization",
@@ -18,12 +19,12 @@ export function buildArticleSchema(root) {
     ?.getAttribute("content");
   const authorName = root
     .querySelector(".profil-left")
-    ?.textContent?.replace(/^\s*par\s*/i, "")
+    ?.textContent?.replace(/^\s*(par|by)\s*/i, "")
     .trim();
 
   const datePublished =
     getIsoDate(root, ".seo-date-source") ||
-    parseFrDate(
+    parseDate(
       root.querySelector(".content_sidebar_date")?.lastElementChild
         ?.textContent,
     );
@@ -35,6 +36,7 @@ export function buildArticleSchema(root) {
     headline,
     url: cleanUrl,
     mainEntityOfPage: cleanUrl,
+    inLanguage: getLocaleTag(),
   };
   if (image) post.image = image;
   if (datePublished) post.datePublished = datePublished;
@@ -77,8 +79,8 @@ export function buildBlogListSchema(root) {
         card.querySelectorAll('[fs-list-field="categories"]'),
       )
         .map((el) => el.textContent.trim())
-        .find((text) => parseFrDate(text));
-      const datePublished = parseFrDate(dateText);
+        .find((text) => parseDate(text));
+      const datePublished = parseDate(dateText);
 
       seenUrls.add(url);
 

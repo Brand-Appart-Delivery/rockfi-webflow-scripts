@@ -38,17 +38,41 @@ export const PRESETS = {
     });
   },
 
-  // Reveal d'image façon "rideau" simple (scale + fondu) : l'élément doit
-  // avoir un wrapper avec overflow:hidden côté CSS (ex: .image_blog).
+  // Reveal d'image : montée (translate). L'élément doit avoir un wrapper avec
+  // overflow:hidden côté CSS (ex: .image_blog).
+  // opts.curtain : en plus, l'élément se dévoile en rideau de bas en haut
+  // (clip-path), sans fondu. Activé par défaut pour la 1re rangée des grilles
+  // (voir scan.js), désactivé ailleurs (hero : montée seule).
   "image-reveal": (el, opts) => {
     const distance = `${opts.distance ?? 1.5}rem`;
-    window.gsap.set(el, { y: distance });
-    return window.gsap.to(el, {
-      y: 0,
-      duration: opts.duration ?? 2,
-      delay: opts.delay ?? 0,
-      ease: opts.ease ?? "power3.out",
-    });
+    const duration = opts.duration ?? 2;
+
+    if (!opts.curtain) {
+      window.gsap.set(el, { y: distance });
+      return window.gsap.to(el, {
+        y: 0,
+        duration,
+        delay: opts.delay ?? 0,
+        ease: opts.ease ?? "power3.out",
+      });
+    }
+
+    window.gsap.set(el, { y: distance, clipPath: "inset(100% 0% 0% 0%)" });
+    return window.gsap
+      .timeline({ delay: opts.delay ?? 0 })
+      .to(el, { y: 0, duration, ease: opts.ease ?? "power3.out" }, 0)
+      .to(
+        el,
+        {
+          clipPath: "inset(0% 0% 0% 0%)",
+          duration: Math.min(duration, 1.2),
+          // Départ doux : au chargement, la 1re frame arrive souvent en retard
+          ease: "power3.inOut",
+          // Le clip-path ne doit pas rester (il couperait ombres, survols...)
+          onComplete: () => window.gsap.set(el, { clearProps: "clipPath" }),
+        },
+        0,
+      );
   },
 
   // Anime un nombre de 0 jusqu'à sa valeur finale, avec un pas d'incrément qui
@@ -64,19 +88,30 @@ export const PRESETS = {
   // proche de target/40.
   "count-up": (el, opts) => {
     const rawText = el.textContent.trim();
-    // Groupe 1 = préfixe, 2 = nombre (chiffres, espaces, décimales avec , ou .), 3 = suffixe
-    const match = rawText.match(/^(.*?)(\d[\d\s]*(?:[.,]\d+)?)(.*)$/);
+    // Groupe 1 = préfixe, 2 = nombre (chiffres + séparateurs), 3 = suffixe
+    const match = rawText.match(/^(.*?)(\d(?:[\d\s\u00a0\u202f.,]*\d)?)(.*)$/);
     if (!match) return window.gsap.timeline();
 
     const prefix = match[1];
     const numberGroup = match[2];
     const suffix = match[3];
 
-    const decSep = numberGroup.includes(",") ? "," : ".";
-    const hasDecimals = /[.,]\d+$/.test(numberGroup);
-    const decimals = hasDecimals ? numberGroup.split(/[.,]/).pop().length : 0;
+    // Format repris tel qu'écrit dans Webflow, quelle que soit la langue :
+    // un séparateur final suivi de 1 ou 2 chiffres = décimales (« 4,5 »,
+    // « 4.5 ») ; les autres sont des séparateurs de milliers (« 1 500 »,
+    // « 1,500 »).
+    const decimalMatch = numberGroup.match(/([.,])(\d{1,2})$/);
+    const decimals = decimalMatch ? decimalMatch[2].length : 0;
+    const decSep = decimalMatch ? decimalMatch[1] : "";
+    const intText = decimalMatch
+      ? numberGroup.slice(0, -decimalMatch[0].length)
+      : numberGroup;
+    const groupSep = (intText.match(/[^\d]/) || [""])[0];
 
-    const targetNumber = parseFloat(numberGroup.replace(/\s/g, "").replace(",", "."));
+    const intValue = intText.replace(/[^\d]/g, "");
+    const targetNumber = parseFloat(
+      decimals ? `${intValue}.${decimalMatch[2]}` : intValue,
+    );
     if (isNaN(targetNumber)) return window.gsap.timeline();
 
     const NICE_STEPS = decimals
@@ -90,16 +125,40 @@ export const PRESETS = {
       NICE_STEPS[NICE_STEPS.length - 1];
 
     const format = (n) => {
-      if (decimals) {
-        return n.toFixed(decimals).replace(".", decSep);
-      }
-      return numberGroup.includes(" ")
-        ? n.toLocaleString("fr-FR").replace(/,/g, " ").replace(/\u202f/g, " ")
-        : String(n);
+      const [int, dec] = n.toFixed(decimals).split(".");
+      const grouped = groupSep
+        ? int.replace(/\B(?=(\d{3})+(?!\d))/g, groupSep)
+        : int;
+      return dec ? `${grouped}${decSep}${dec}` : grouped;
     };
 
+    // Le texte du HTML n'est JAMAIS modifié : crawlers, LLM et lecteurs
+    // d'écran lisent toujours la vraie valeur. Le chiffre animé est affiché
+    // par-dessus, via un pseudo-élément (::after, voir animate.scss) qui ne
+    // fait pas partie du texte de la page. Le vrai texte, masqué pendant
+    // l'animation, garde aussi la place finale : pas de saut de mise en page.
+    const show = (n) => {
+      el.setAttribute("data-count-display", `${prefix}${format(n)}${suffix}`);
+    };
+    const stop = () => {
+      el.classList.remove("is-counting");
+      el.removeAttribute("data-count-display");
+      el.style.removeProperty("--count-justify");
+    };
+
+    // Même alignement que le vrai texte pour le chiffre animé
+    const align = getComputedStyle(el).textAlign;
+    const justify =
+      align === "center"
+        ? "center"
+        : align === "right" || align === "end"
+          ? "flex-end"
+          : "flex-start";
+    el.style.setProperty("--count-justify", justify);
+
     const counter = { value: 0 };
-    el.textContent = `${prefix}${format(0)}${suffix}`;
+    show(0);
+    el.classList.add("is-counting");
 
     return window.gsap.to(counter, {
       value: targetNumber,
@@ -107,12 +166,10 @@ export const PRESETS = {
       delay: opts?.delay ?? 0,
       ease: opts?.ease ?? "power1.out",
       onUpdate: () => {
-        const stepped = Math.min(Math.round(counter.value / step) * step, targetNumber);
-        el.textContent = `${prefix}${format(stepped)}${suffix}`;
+        show(Math.min(Math.round(counter.value / step) * step, targetNumber));
       },
-      onComplete: () => {
-        el.textContent = rawText;
-      },
+      onComplete: stop,
+      onInterrupt: stop,
     });
   },
 

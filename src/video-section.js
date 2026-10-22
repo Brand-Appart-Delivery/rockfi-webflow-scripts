@@ -22,6 +22,11 @@
 //   youtube:ID  ou URL YouTube
 //   vimeo:ID    vimeo:ID/HASH (non répertoriée)  ou URL Vimeo
 //
+// Liens vers une vidéo : un lien <a href="#id"> qui pointe sur l'élément
+// data-video-player (ou son .video_layout) fait défiler jusqu'à la vidéo ET la
+// lance dans le même clic (ex. CTA « Voir la vidéo » du hero). Rien à ajouter
+// dans Webflow : il suffit que la vidéo ait un id. Ignoré pour les fonds vidéo.
+//
 // Un seul lecteur (avec son) actif à la fois : en lancer un remet les autres
 // sur leur aperçu / poster. À la fin d'une vidéo, on revient à l'aperçu ou au
 // poster (évite l'écran de fin "autres vidéos" de Vimeo).
@@ -95,16 +100,18 @@
 //                                   ses pixels sont mesurés (l'image doit être servie avec
 //                                   CORS). Sinon, le script lit la couleur de fond CSS.
 
-const PLYR_I18N_FR = {
-  play: "Lire",
-  pause: "Pause",
-  mute: "Couper le son",
-  unmute: "Activer le son",
-  enableCaptions: "Activer les sous-titres",
-  disableCaptions: "Désactiver les sous-titres",
-  enterFullscreen: "Plein écran",
-  exitFullscreen: "Quitter le plein écran",
-};
+import { t, getLang, getLangLabel } from "./utils/i18n.js";
+
+const getPlyrI18n = () => ({
+  play: t("video.play"),
+  pause: t("video.pause"),
+  mute: t("video.mute"),
+  unmute: t("video.unmute"),
+  enableCaptions: t("video.enableCaptions"),
+  disableCaptions: t("video.disableCaptions"),
+  enterFullscreen: t("video.enterFullscreen"),
+  exitFullscreen: t("video.exitFullscreen"),
+});
 
 // Options passées à l'iframe YouTube (ignorées pour Vimeo / mp4)
 const YOUTUBE_OPTIONS = {
@@ -229,7 +236,7 @@ function warmProvider(src) {
 // startAt        : seconde de départ de l'aperçu (fichier natif, via #t=)
 function buildPlayerMarkup(src, captions, title, preview = false, startAt = 0) {
   const info = getVideoInfo(src);
-  const frameTitle = title || "Lecteur vidéo";
+  const frameTitle = title || t("video.player");
 
   if (info.type === "youtube" || info.type === "vimeo") {
     // Vimeo avec hash : on passe l'URL complète, Plyr en extrait l'ID et le hash
@@ -243,7 +250,7 @@ function buildPlayerMarkup(src, captions, title, preview = false, startAt = 0) {
   }
 
   const track = captions
-    ? `<track kind="captions" label="Français" srclang="fr" src="${captions}" default>`
+    ? `<track kind="captions" label="${getLangLabel()}" srclang="${getLang()}" src="${captions}" default>`
     : "";
 
   return `<video playsinline preload="metadata"><source src="${info.url}" type="video/mp4">${track}</video>`;
@@ -671,6 +678,63 @@ function initCoverFit(el) {
 // ---------------------------------------------------------------------------
 let activeStop = null;
 
+// ---------------------------------------------------------------------------
+// Liens vers une vidéo (ex. CTA « Voir la vidéo » → href="#video")
+// Un lien dont l'ancre pointe sur une vidéo (ou son conteneur) la LANCE, en
+// plus du scroll animé géré par core.js. Le lancement se fait dans le clic
+// lui-même : sinon les navigateurs bloquent la lecture avec son, et il
+// fallait recliquer sur la vidéo.
+// Le survol / toucher / focus du lien préchauffe aussi le lecteur.
+// ---------------------------------------------------------------------------
+const anchorControllers = new Map(); // id → { start, warmUp }
+let anchorsBound = false;
+
+function controllerFromEvent(e) {
+  const link = e.target.closest && e.target.closest("a[href*='#']");
+  if (!link) return null;
+  let url;
+  try {
+    url = new URL(link.href, window.location.href);
+  } catch (err) {
+    return null;
+  }
+  if (url.origin !== window.location.origin || url.pathname !== window.location.pathname) {
+    return null;
+  }
+  return anchorControllers.get(decodeURIComponent(url.hash.slice(1))) || null;
+}
+
+function bindVideoAnchors() {
+  if (anchorsBound) return;
+  anchorsBound = true;
+
+  // Capture sur window : passe avant le gestionnaire d'ancres de core.js
+  // (capture sur document), qui s'occupe ensuite du scroll. On ne bloque rien.
+  window.addEventListener(
+    "click",
+    (e) => {
+      const ctrl = controllerFromEvent(e);
+      if (ctrl) ctrl.start();
+    },
+    true,
+  );
+
+  const warm = (e) => {
+    const ctrl = controllerFromEvent(e);
+    if (ctrl) ctrl.warmUp();
+  };
+  window.addEventListener("pointerover", warm, { passive: true, capture: true });
+  window.addEventListener("touchstart", warm, { passive: true, capture: true });
+  window.addEventListener("focusin", warm, true);
+}
+
+function registerVideoAnchors(elements, controller) {
+  const ids = elements.map((el) => el && el.id).filter(Boolean);
+  if (!ids.length) return;
+  ids.forEach((id) => anchorControllers.set(id, controller));
+  bindVideoAnchors();
+}
+
 function claimPlayback(stop) {
   if (activeStop && activeStop !== stop) activeStop();
   activeStop = stop;
@@ -701,6 +765,7 @@ function setupPlayback({
   autoplayStart,
   prewarm = "hover",
   bg = false,
+  anchors = [],
 }) {
   ensureStyles();
   loadDuration(src, timerEl, duration);
@@ -967,7 +1032,7 @@ function setupPlayback({
         ...(hasCaptions ? ["captions"] : []),
         "fullscreen",
       ],
-      i18n: PLYR_I18N_FR,
+      i18n: getPlyrI18n(),
       youtube: YOUTUBE_OPTIONS,
     });
     w.player = pl;
@@ -1091,7 +1156,16 @@ function setupPlayback({
 
     const play = () => {
       const p = pl.play();
-      if (p && typeof p.catch === "function") p.catch(() => {});
+      if (!p || typeof p.catch !== "function") return;
+      p.catch((err) => {
+        // Le navigateur refuse la lecture avec son (clic trop loin du
+        // lancement, Safari / iOS...) : on lance en muet plutôt que de ne rien
+        // faire. Le bouton son de Plyr permet de le réactiver.
+        if (!err || err.name !== "NotAllowedError" || holder !== h) return;
+        pl.muted = true;
+        const retry = pl.play();
+        if (retry && typeof retry.catch === "function") retry.catch(() => {});
+      });
     };
 
     // Lecteur déjà prêt (préchauffé) : play() part directement dans le geste utilisateur
@@ -1102,13 +1176,22 @@ function setupPlayback({
   [trigger, ...extraTriggers].filter(Boolean).forEach((btn) => {
     btn.setAttribute("role", "button");
     btn.setAttribute("tabindex", "0");
-    btn.setAttribute("aria-label", "Voir la vidéo");
+    btn.setAttribute("aria-label", t("video.watch"));
     btn.addEventListener("click", start);
     btn.addEventListener("keydown", (ev) => {
       if (ev.key === "Enter" || ev.key === " ") {
         start(ev);
       }
     });
+  });
+
+  // Liens vers cette vidéo (#id) : lancent la lecture dans le clic.
+  // Jamais pour un fond vidéo décoratif.
+  if (!bg) registerVideoAnchors(anchors, {
+    start: () => start(),
+    warmUp: () => {
+      if (prewarm !== "off") warmUp();
+    },
   });
 
   // ---- Préchauffage avant le clic ----
@@ -1251,7 +1334,7 @@ function initHero(media) {
     iframe.setAttribute("tabindex", "-1");
     iframe.setAttribute("aria-hidden", "true");
     iframe.setAttribute("loading", "eager");
-    iframe.title = media.dataset.videoTitle || "Vidéo d'arrière-plan";
+    iframe.title = media.dataset.videoTitle || t("video.background");
     Object.assign(iframe.style, {
       position: "absolute",
       top: "50%",
@@ -1440,6 +1523,8 @@ function initOne(media) {
     autoplayStart: readAutoplayStart(media),
     prewarm: readPrewarm(media),
     bg,
+    // Seuls la vidéo et son bloc .video_layout comptent comme cible d'ancre
+    anchors: [media, media.closest(".video_layout")],
   });
 }
 
@@ -1466,6 +1551,7 @@ function initCard(card) {
     autoplayDelay: readAutoplayDelay(card),
     autoplayStart: readAutoplayStart(card),
     prewarm: readPrewarm(card),
+    anchors: [card],
   });
 }
 

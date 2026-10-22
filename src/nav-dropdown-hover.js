@@ -231,8 +231,16 @@ function setupFirstLinkAlignment(nav, dropdowns) {
     setPadding(Math.round(value * 100) / 100);
   }
 
+  // Webflow change plusieurs classes d'affilée à l'ouverture/fermeture :
+  // un seul calcul par frame. Le rAF passe avant le rendu, donc le menu
+  // s'affiche déjà aligné.
+  let alignFrame = null;
   function alignAll() {
-    dropdowns.forEach(align);
+    if (alignFrame) return;
+    alignFrame = requestAnimationFrame(() => {
+      alignFrame = null;
+      dropdowns.forEach(align);
+    });
   }
 
   new MutationObserver(alignAll).observe(nav, {

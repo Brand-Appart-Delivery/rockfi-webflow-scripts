@@ -1,4 +1,7 @@
 // src/share-toast.js
+
+import { t } from "./utils/i18n.js";
+
 function showToast(message) {
   let toast = document.querySelector(".toast-copy");
   if (!toast) {
@@ -44,8 +47,8 @@ function initShareToast() {
     el.addEventListener("click", (e) => {
       e.preventDefault();
       copyText(getPageUrl())
-        .then(() => showToast("Lien bien copié"))
-        .catch(() => showToast("Impossible de copier le lien"));
+        .then(() => showToast(t("share.copied")))
+        .catch(() => showToast(t("share.error")));
     });
   });
 

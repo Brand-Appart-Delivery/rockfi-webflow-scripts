@@ -1,24 +1,39 @@
 // src/schema/utils.js
+import { getPathWithoutLocale } from "../utils/i18n.js";
 
+// Ignore le préfixe de langue : "/en/blog-post/x" passe le test "/blog-post/"
 export function pathnameStartsWith(prefix) {
-  return window.location.pathname.startsWith(prefix);
+  return getPathWithoutLocale().startsWith(prefix);
 }
 
 export function isRealUrl(url) {
   return Boolean(url) && url !== "#" && !url.startsWith("#");
 }
 
-const FR_MONTHS = {
+const MONTHS = {
+  // Français
   janvier: "01", février: "02", fevrier: "02", mars: "03", avril: "04",
   mai: "05", juin: "06", juillet: "07", août: "08", aout: "08",
   septembre: "09", octobre: "10", novembre: "11", décembre: "12", decembre: "12",
+  // Anglais
+  january: "01", february: "02", march: "03", april: "04", may: "05", june: "06",
+  july: "07", august: "08", september: "09", october: "10", november: "11", december: "12",
 };
 
-export function parseFrDate(text) {
-  const match = (text || "").trim().toLowerCase().match(/^(\d{1,2})\s+([a-zéû]+)\s+(\d{4})$/i);
-  if (!match) return null;
-  const [, day, monthName, year] = match;
-  const month = FR_MONTHS[monthName];
+// Date écrite en toutes lettres → "AAAA-MM-JJ".
+// Accepte « 22 octobre 2026 », « 22 October 2026 » et « October 22, 2026 » (et « 1er mai 2026 »).
+export function parseDate(text) {
+  const value = (text || "").trim().toLowerCase().replace(/,/g, "");
+  let match = value.match(/^(\d{1,2})(?:er|st|nd|rd|th)?\s+([a-zéû]+)\s+(\d{4})$/i);
+  let day, monthName, year;
+  if (match) {
+    [, day, monthName, year] = match;
+  } else {
+    match = value.match(/^([a-zéû]+)\s+(\d{1,2})(?:er|st|nd|rd|th)?\s+(\d{4})$/i);
+    if (!match) return null;
+    [, monthName, day, year] = match;
+  }
+  const month = MONTHS[monthName];
   if (!month) return null;
   return `${year}-${month}-${day.padStart(2, "0")}`;
 }

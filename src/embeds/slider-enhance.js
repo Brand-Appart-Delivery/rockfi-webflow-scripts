@@ -3,6 +3,8 @@
 // initSliderListeners(root) : attache drag + boutons sur les nœuds DOM
 // finaux, appelé une seule fois après le write global de innerHTML.
 
+import { t } from "../utils/i18n.js";
+
 const SLIDER_BLOCK_REGEX =
   /(?:<p>)?\[slider\](?:<\/p>)?([\s\S]*?)(?:<p>)?\[\/slider\](?:<\/p>)?/gi;
 
@@ -33,7 +35,7 @@ function buildSlidesHTML(body) {
 
       // On garde <div> pour éviter les marges natives des <figure>
       return `
-        <div class="rt-slider-item" role="group" aria-roledescription="diapositive" aria-label="${idx + 1} sur ${total}">
+        <div class="rt-slider-item" role="group" aria-roledescription="${t("slider.slide")}" aria-label="${t("slider.position", { index: idx + 1, total })}">
           <img src="${url}" alt="${caption}" loading="lazy" draggable="false">
           ${captionHTML}
         </div>
@@ -49,11 +51,11 @@ export function transformSlider(html) {
 
     // Pleine largeur garantie, balise <div> préservée
     return `
-      <div class="rt-slider" role="region" aria-roledescription="carrousel" aria-label="Galerie d'images" tabindex="0">
+      <div class="rt-slider" role="region" aria-roledescription="${t("slider.region")}" aria-label="${t("slider.label")}" tabindex="0">
         <div class="rt-slider-track">${slidesHTML}</div>
         <div class="rt-slider-controls">
-          <button type="button" class="rt-slider-prev" aria-label="Image précédente">${CHEVRON_SVG}</button>
-          <button type="button" class="rt-slider-next" aria-label="Image suivante">${CHEVRON_SVG}</button>
+          <button type="button" class="rt-slider-prev" aria-label="${t("slider.prev")}">${CHEVRON_SVG}</button>
+          <button type="button" class="rt-slider-next" aria-label="${t("slider.next")}">${CHEVRON_SVG}</button>
         </div>
       </div>
     `;

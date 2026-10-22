@@ -7,6 +7,7 @@
 @use "video";
 @use "stack";
 @use "switch";
+@use "compare";
 
 // ---- Zoom au survol des images ----
 // data-hover-zoom       → sur la carte/le lien qui reçoit le survol
@@ -123,4 +124,13 @@
 .toast-copy.is-visible {
   opacity: 1;
   transform: translate(-50%, 0);
+}
+// ---- Captcha Cloudflare Turnstile dans les filtres ----
+// Webflow ajoute à la fin de chaque formulaire une div qui contient le champ
+// caché du captcha. Dans les filtres Finsweet (formulaire en flex
+// space-between), cette div vide compte comme un élément de plus et pousse la
+// barre de recherche au milieu. Un filtre n'est jamais envoyé : le captcha y
+// est inutile, on le retire de la mise en page.
+form[fs-list-element="filters"] > div:has(> input[name="cf-turnstile-response"]) {
+  display: none;
 }

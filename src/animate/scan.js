@@ -67,165 +67,95 @@ function attachTrigger(el, animation) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Grilles (data-grid-reveal="preset") : listes CMS, filtrées / paginées par
+// Finsweet. Seule la PREMIÈRE RANGÉE s'anime, quand elle arrive à l'écran
+// (montée + rideau, items enchaînés avec data-anim-stagger, 0.08 s par
+// défaut) ; les autres rangées sont affichées directement.
+//   - data-anim-curtain="false" : montée seule, sans rideau.
+//   - Masqués dès le premier affichage par le CSS (animate.scss) : pas de flash.
+//   - Items ajoutés ou réaffichés plus tard par Finsweet (filtre, « afficher
+//     plus ») : affichés directement, sans animation.
+//   - data-anim-target (facultatif, dans un item) : élément animé à la place
+//     de l'item entier.
+// ---------------------------------------------------------------------------
 function getGridItems(grid) {
   let items = Array.from(grid.querySelectorAll(":scope > .w-dyn-item, :scope > [data-anim-item]"));
-  if (!items.length) items = Array.from(grid.querySelectorAll(":scope > *"));
+  if (!items.length) items = Array.from(grid.children);
   return items;
-}
-
-function isShown(item) {
-  const style = window.getComputedStyle(item);
-  return (
-    style.display !== "none" &&
-    style.visibility !== "hidden" &&
-    style.opacity !== "0" &&
-    item.offsetHeight > 0
-  );
-}
-
-function itemKey(item) {
-  const link = item.querySelector("a[href]");
-  return (link && link.getAttribute("href")) || (item.textContent || "").trim().slice(0, 40);
 }
 
 const toTarget = (item) => item.querySelector("[data-anim-target]") || item;
 
-function showWithoutAnimation(items) {
-  items.forEach((item) => {
-    const target = toTarget(item);
-    target.classList.add("--visible");
-    window.gsap.killTweensOf(target);
-    window.gsap.set(target, { clearProps: "all" });
-  });
+// "top 95%" (data-anim-start) → marge basse de l'IntersectionObserver
+function gridRootMargin(start) {
+  const match = /top\s+(\d+(?:\.\d+)?)%/.exec(start || "");
+  const percent = match ? parseFloat(match[1]) : 95;
+  return `0px 0px -${Math.max(0, 100 - percent)}% 0px`;
 }
 
-function runGridReveal(grid, isRefilter = false) {
-  const presetName = grid.dataset.gridReveal || "image-reveal";
-  const preset = PRESETS[presetName];
+function showGridItem(item) {
+  item._gridBound = true;
+  item.classList.add("--visible");
+  toTarget(item).classList.add("--visible");
+}
+
+// Items affichés dont le haut est aligné sur celui du premier (± 25 px)
+function getFirstRow(items) {
+  const shown = items.filter((item) => item.offsetParent !== null);
+  if (!shown.length) return [];
+  const firstTop = shown[0].getBoundingClientRect().top;
+  return shown.filter((item) => Math.abs(item.getBoundingClientRect().top - firstTop) <= 25);
+}
+
+function setupGridReveal(grid) {
+  const preset = PRESETS[grid.dataset.gridReveal || "image-reveal"];
   if (!preset) return;
 
-  const visibleItems = getGridItems(grid).filter(isShown);
-  if (!visibleItems.length) return;
+  // Rideau par défaut sur la 1re rangée (data-anim-curtain="false" pour l'enlever)
+  const opts = { ...readOpts(grid), curtain: grid.dataset.animCurtain !== "false" };
+  const stagger = opts.stagger ?? 0.08;
+  const items = getGridItems(grid);
+  const firstRow = getFirstRow(items);
 
-  if (isRefilter && grid._gridEntered) {
-    showWithoutAnimation(visibleItems);
-    return;
-  }
+  // Rangées suivantes : visibles tout de suite
+  items.filter((item) => !firstRow.includes(item)).forEach(showGridItem);
 
-  const opts = readOpts(grid);
-  const staggerStep = opts.stagger ?? 0.08;
+  // Première rangée : animée à son arrivée à l'écran. IntersectionObserver
+  // (position réelle à chaque instant) plutôt que ScrollTrigger, dont les
+  // positions, calculées avant le chargement des images, étaient fausses.
+  const observer = new IntersectionObserver(
+    (entries) => {
+      let index = 0;
+      entries.forEach((entry) => {
+        const item = entry.target;
+        const passed = entry.boundingClientRect.bottom < 0 && entry.boundingClientRect.height > 0;
+        if (!entry.isIntersecting && !passed) return;
 
-  const rowTop = (item) => item.getBoundingClientRect().top;
-  const firstTop = rowTop(visibleItems[0]);
-  const tolerance = 25;
-
-  const firstRowItems = visibleItems.filter((item) => Math.abs(rowTop(item) - firstTop) <= tolerance);
-  const otherItems = visibleItems.filter((item) => !firstRowItems.includes(item));
-
-  const signature = firstRowItems.map(itemKey).join("|");
-  if (isRefilter && grid._gridSig === signature) return;
-  grid._gridSig = signature;
-
-  const firstRowTargets = firstRowItems.map(toTarget);
-  const otherTargets = otherItems.map(toTarget);
-
-  if (grid._gridRevealTl) {
-    grid._gridRevealTl.kill();
-    grid._gridRevealTl = null;
-  }
-
-  otherTargets.forEach((target) => {
-    target.classList.add("--visible");
-    window.gsap.set(target, { opacity: 1, y: 0, scale: 1, clearProps: "all" });
-  });
-
-  const tl = window.gsap.timeline({ paused: true });
-  grid._gridRevealTl = tl;
-  grid._gridFirstRow = firstRowTargets;
-
-  firstRowTargets.forEach((target, index) => {
-    target.classList.remove("--visible");
-    window.gsap.killTweensOf(target);
-
-    const itemAnim = preset(target, { ...opts, delay: 0 });
-    tl.add(itemAnim, index * staggerStep);
-  });
-
-  if (!grid._gridTrigger) {
-    const start = grid.dataset.animStart || "top 95%";
-
-    grid._gridTrigger = window.ScrollTrigger.create({
-      trigger: grid,
-      start,
-      fastScrollEnd: true,
-      once: true,
-      onEnter: (self) => {
-        grid._gridEntered = true;
-        const current = grid._gridRevealTl;
-        if (!current) return;
-        (grid._gridFirstRow || []).forEach((t) => t.classList.add("--visible"));
-        if (self.progress === 1 || grid.getBoundingClientRect().bottom < 0) {
-          current.progress(1);
-        } else {
-          current.play();
-        }
-      },
-    });
-  }
-
-  if (grid._gridEntered) return;
-
-  const rect = grid.getBoundingClientRect();
-  const hasAlreadyScrolledPast = window.scrollY > 200 && rect.bottom < 0;
-
-  if (hasAlreadyScrolledPast) {
-    grid._gridEntered = true;
-    firstRowTargets.forEach((t) => t.classList.add("--visible"));
-    tl.progress(1);
-  } else if (rect.top < window.innerHeight) {
-    grid._gridEntered = true;
-    firstRowTargets.forEach((t) => t.classList.add("--visible"));
-    tl.play();
-  }
-}
-
-let refilterBound = false;
-let refilterTimer = null;
-
-function triggerRefilter() {
-  clearTimeout(refilterTimer);
-  refilterTimer = setTimeout(() => {
-    document.querySelectorAll("[data-grid-reveal]").forEach((grid) => runGridReveal(grid, true));
-  }, 120);
-}
-
-function bindRefilter(root) {
-  if (refilterBound) return;
-  refilterBound = true;
-
-  root
-    .querySelectorAll('[fs-list-element="filters"], form.blog-list_filter-form-flex')
-    .forEach((form) => {
-      form.addEventListener("change", triggerRefilter);
-      form.addEventListener("input", triggerRefilter);
-      form.addEventListener("reset", triggerRefilter);
-    });
-
-  root.querySelectorAll('[fs-list-element="clear"]').forEach((btn) => {
-    btn.addEventListener("click", triggerRefilter);
-  });
-
-  window.FinsweetAttributes = window.FinsweetAttributes || [];
-  window.FinsweetAttributes.push([
-    "list",
-    (listInstances) => {
-      listInstances.forEach((listInstance) => {
-        if (typeof listInstance.addHook === "function") {
-          listInstance.addHook("afterRender", triggerRefilter);
-        }
+        observer.unobserve(item);
+        showGridItem(item);
+        // Déjà au-dessus de l'écran (scroll restauré, retour arrière) : état final
+        if (passed) item._gridAnim.progress(1);
+        else window.gsap.delayedCall(index++ * stagger, () => item._gridAnim.play());
       });
     },
-  ]);
+    { rootMargin: gridRootMargin(grid.dataset.animStart), threshold: 0 },
+  );
+
+  firstRow.forEach((item) => {
+    item._gridBound = true;
+    item._gridAnim = preset(toTarget(item), { ...opts, delay: 0 });
+    item._gridAnim.pause();
+    observer.observe(item);
+  });
+
+  // Finsweet ajoute / réaffiche des items (filtre, « afficher plus ») :
+  // affichés directement, sans rejouer d'animation.
+  new MutationObserver(() => {
+    getGridItems(grid).forEach((item) => {
+      if (!item._gridBound) showGridItem(item);
+    });
+  }).observe(grid, { childList: true });
 }
 
 export function scanAnimations(root = document) {
@@ -237,11 +167,9 @@ export function scanAnimations(root = document) {
     return true;
   };
 
-  const grids = Array.from(root.querySelectorAll("[data-grid-reveal]"));
-  grids.forEach((grid) => {
-    if (claim(grid)) runGridReveal(grid, false);
+  root.querySelectorAll("[data-grid-reveal]").forEach((grid) => {
+    if (claim(grid)) setupGridReveal(grid);
   });
-  if (grids.length) bindRefilter(root);
 
   root.querySelectorAll("[data-inview]").forEach((el) => {
     const presetName = el.dataset.inview;

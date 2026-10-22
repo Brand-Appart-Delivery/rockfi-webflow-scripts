@@ -53,6 +53,8 @@
 // Classes posées en plus : "is-active" + aria-selected sur le bouton actif.
 // Les contenus inactifs reçoivent l'attribut [hidden] (voir switch.scss).
 
+import { requestScrollRefresh } from "./utils/scroll-refresh.js";
+
 const DEFAULT_DURATION = 0.45;
 const DEFAULT_DISTANCE = 10; // % de la largeur du contenu ("slide")
 const DEFAULT_PUSH_DISTANCE = 100; // % de la largeur du contenu ("push")
@@ -179,7 +181,7 @@ function initGroup(group) {
     if (h > 0) {
       const px = `${Math.ceil(h)}px`;
       group.style.minHeight = px;
-      if (prevMin && px !== prevMin && window.ScrollTrigger) window.ScrollTrigger.refresh();
+      if (prevMin && px !== prevMin) requestScrollRefresh();
     } else {
       group.style.minHeight = prevMin;
     }
@@ -476,9 +478,7 @@ function initGroup(group) {
 
     // Les hauteurs changent : on recalcule les animations au scroll (après la fin des transitions)
     const refreshDelay = animate ? (outDuration + duration) * 1000 + 50 : 0;
-    setTimeout(() => {
-      if (window.ScrollTrigger) window.ScrollTrigger.refresh();
-    }, refreshDelay);
+    requestScrollRefresh(refreshDelay);
   }
 
   // ------------------------------------------------------------------ accessibilité + interactions

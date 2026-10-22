@@ -3,21 +3,22 @@
 // initVideoListeners(root) : instancie Plyr + câble l'overlay custom sur
 // les nœuds DOM finaux, appelé une seule fois après le write global.
 
+import { t, getLang, getLangLabel } from "../utils/i18n.js";
 import { parseAttrs } from "../utils/parse-attrs.js";
 
 const VIDEO_BLOCK_REGEX = /(?:<p>)?\[video([^\]]*)\](?:<\/p>)?/gi;
 
 // Traduction accessible de l'interface Plyr
-const PLYR_I18N_FR = {
-  play: "Lire",
-  pause: "Pause",
-  mute: "Couper le son",
-  unmute: "Activer le son",
-  enableCaptions: "Activer les sous-titres",
-  disableCaptions: "Désactiver les sous-titres",
-  enterFullscreen: "Plein écran",
-  exitFullscreen: "Quitter le plein écran",
-};
+const getPlyrI18n = () => ({
+  play: t("video.play"),
+  pause: t("video.pause"),
+  mute: t("video.mute"),
+  unmute: t("video.unmute"),
+  enableCaptions: t("video.enableCaptions"),
+  disableCaptions: t("video.disableCaptions"),
+  enterFullscreen: t("video.enterFullscreen"),
+  exitFullscreen: t("video.exitFullscreen"),
+});
 
 function getVideoInfo(src) {
   const ytMatch = src.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]+)/);
@@ -31,7 +32,7 @@ function getVideoInfo(src) {
 
 function buildPlayerMarkup(src, poster, captions, title) {
   const info = getVideoInfo(src);
-  const frameTitle = title || "Lecteur vidéo";
+  const frameTitle = title || t("video.player");
 
   if (info.type === "youtube") {
     return `<div class="plyr__video-embed" data-plyr-provider="youtube" data-plyr-embed-id="${info.id}" title="${frameTitle}"></div>`;
@@ -42,7 +43,7 @@ function buildPlayerMarkup(src, poster, captions, title) {
 
   const posterAttr = poster ? ` poster="${poster}"` : "";
   const trackHTML = captions
-    ? `<track kind="captions" label="Français" srclang="fr" src="${captions}" default>`
+    ? `<track kind="captions" label="${getLangLabel()}" srclang="${getLang()}" src="${captions}" default>`
     : "";
 
   // preload="metadata" protège les Core Web Vitals et le data saver mobile
@@ -90,9 +91,9 @@ export function transformVideo(html) {
         <div class="rt-video-overlay">
           <div class="rt-video-gradient"></div>
           <div class="rt-video-cta">
-            <button type="button" class="rt-video-play-glass" aria-label="Voir la vidéo">${iconSVG}</button>
+            <button type="button" class="rt-video-play-glass" aria-label="${t("video.watch")}">${iconSVG}</button>
             <div class="rt-video-cta-meta">
-              <span class="rt-video-cta-text">Voir la vidéo</span>
+              <span class="rt-video-cta-text">${t("video.watch")}</span>
               <span class="rt-video-cta-duration"></span>
             </div>
           </div>
@@ -124,7 +125,7 @@ export function initVideoListeners(root = document) {
 
     const player = new window.Plyr(target, {
       controls,
-      i18n: PLYR_I18N_FR,
+      i18n: getPlyrI18n(),
     });
 
     const glassBtn = el.querySelector(".rt-video-play-glass");

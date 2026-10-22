@@ -1,4 +1,5 @@
 // src/core.js
+import { requestScrollRefresh } from "./utils/scroll-refresh.js";
 import { prefersReducedMotion } from "./utils/motion-preference.js";
 
 let lenisInstance = null;
@@ -100,7 +101,10 @@ function initAnchors() {
   }
 }
 
+// Seul endroit où Lenis est créé et branché sur GSAP / ScrollTrigger.
+// (animate/setup.js ne fait plus qu'enregistrer le plugin.)
 export function initLenis() {
+  if (lenisInstance) return lenisInstance; // jamais deux instances
   if (typeof window.Lenis === "undefined") return null;
   if (prefersReducedMotion()) return null;
 
@@ -110,42 +114,45 @@ export function initLenis() {
     anchors: false,
   });
 
-  // 1. Liaison avec GSAP et ScrollTrigger si présents
-  if (typeof window.gsap !== "undefined") {
-    if (typeof window.ScrollTrigger !== "undefined") {
+  const hasGsap = typeof window.gsap !== "undefined";
+  const hasScrollTrigger = hasGsap && typeof window.ScrollTrigger !== "undefined";
+
+  // 1. Une seule boucle d'animation : le ticker GSAP s'il existe, sinon RAF
+  if (hasGsap) {
+    if (hasScrollTrigger) {
+      window.gsap.registerPlugin(window.ScrollTrigger);
       lenisInstance.on("scroll", window.ScrollTrigger.update);
     }
-
-    window.gsap.ticker.add((time) => {
-      lenisInstance.raf(time * 1000);
-    });
+    window.gsap.ticker.add((time) => lenisInstance.raf(time * 1000));
     window.gsap.ticker.lagSmoothing(0);
   } else {
-    // Fallback RAF classique si GSAP n'est pas chargé
-    function raf(time) {
+    const raf = (time) => {
       lenisInstance.raf(time);
       requestAnimationFrame(raf);
-    }
+    };
     requestAnimationFrame(raf);
   }
 
-  // 2. Recalcul de la hauteur après chargement complet des assets (images, vidéos)
-  window.addEventListener("load", () => {
-    lenisInstance.resize();
-    if (typeof window.ScrollTrigger !== "undefined") {
-      window.ScrollTrigger.refresh();
-    }
-  });
-
-  // 3. Détection dynamique des changements de hauteur (accordéons FAQ, lazy loading, embeds)
+  // 2. Hauteur de page qui change (accordéons, lazy loading, embeds, listes) :
+  // recalcul regroupé, et seulement si la hauteur a vraiment changé. Évite de
+  // relancer ScrollTrigger.refresh() (coûteux) en boucle pendant le scroll.
   if (typeof ResizeObserver !== "undefined") {
-    const resizeObserver = new ResizeObserver(() => {
+    let lastHeight = 0;
+    let timer = null;
+
+    const recalc = () => {
+      timer = null;
+      const height = document.body.scrollHeight;
+      if (height === lastHeight) return;
+      lastHeight = height;
       lenisInstance.resize();
-      if (typeof window.ScrollTrigger !== "undefined") {
-        window.ScrollTrigger.refresh();
-      }
-    });
-    resizeObserver.observe(document.body);
+      requestScrollRefresh(0);
+    };
+
+    new ResizeObserver(() => {
+      clearTimeout(timer);
+      timer = setTimeout(recalc, 150);
+    }).observe(document.body);
   }
 
   return lenisInstance;
