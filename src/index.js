@@ -27,6 +27,7 @@ import { initSpeakersSlot } from "./speakers-slot.js";
 import { initNavDropdownHover } from "./nav-dropdown-hover";
 import { initFitScale } from "./fit-scale.js";
 import { initNavMenuLabel } from "./nav-menu-label.js";
+import { initNavScroll } from "./nav-scroll.js";
 
 const BUILD_VERSION = new Date().toISOString().slice(0, 10);
 console.log(
@@ -58,6 +59,7 @@ onReady(() => {
   initNameTokens();
   initNavHero();
   initNavMenuLabel();
+  initNavScroll();
   initHeroBgParallax();
   initStackCards();
   initNavDropdownHover();

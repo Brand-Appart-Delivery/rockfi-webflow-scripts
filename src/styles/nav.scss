@@ -239,3 +239,70 @@ $nav-dark: '[data-wf--navbar--variant$="-dark"]';
 @media (prefers-reduced-motion: reduce) {
   .menu-label_item { transition: opacity 0.2s ease; transform: none !important; }
 }
+// ---- Desktop étroit : liens scrollables ----
+// Avant le passage en burger (991px), les liens passaient sur deux lignes
+// (« Nos / conseillers ») : nav illisible. Les libellés restent sur une ligne
+// et, quand la place manque, la zone des liens défile horizontalement, avec un
+// fondu sur le bord concerné (classes posées par nav-scroll.js). Le logo et
+// les boutons gardent leur taille.
+$nav-desktop-query: "(min-width: 992px)";
+$nav-fade: 2.5rem;
+$nav-gutter: 1.5rem;
+
+@media #{$nav-desktop-query} {
+  .navbar_menu .navbar_link,
+  .navbar_menu .dropdown-toggle,
+  .navbar_button-desktop > * {
+    white-space: nowrap;
+  }
+
+  .navbar-brand,
+  .navbar_button-wrapper {
+    flex-shrink: 0;
+  }
+
+  .navbar_menu {
+    min-width: 0;
+    // Espace de respiration avec le logo et les boutons, où tombe le fondu.
+    // Symétrique : la position des liens ne bouge pas quand il y a la place.
+    padding-left: #{$nav-gutter};
+    padding-right: #{$nav-gutter};
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    > * {
+      flex-shrink: 0;
+    }
+
+    // Masque plutôt qu'un aplat blanc : le fondu suit le fond de la nav
+    // (blanche, noire ou transparente sur un hero).
+    &.is-fade-left {
+      mask-image: linear-gradient(to right, transparent, #000 #{$nav-fade});
+    }
+
+    &.is-fade-right {
+      mask-image: linear-gradient(to left, transparent, #000 #{$nav-fade});
+    }
+
+    &.is-fade-left.is-fade-right {
+      mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 #{$nav-fade},
+        #000 calc(100% - #{$nav-fade}),
+        transparent
+      );
+    }
+
+    // Menu déroulant ouvert : son panneau est dessiné dans la zone masquée,
+    // on retire le fondu pour ne pas le couper.
+    &:has(.w--open) {
+      mask-image: none !important;
+    }
+  }
+}
