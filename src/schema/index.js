@@ -1,4 +1,5 @@
 // src/schema/index.js
+// JSON-LD des pages à listes (voir builders.js), injecté dans un @graph.
 import { PAGE_BUILDERS } from "./registry.js";
 import { injectGraph } from "./utils.js";
 

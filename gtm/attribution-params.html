@@ -1,0 +1,85 @@
+<!--
+  Balise GTM "HTML personnalisé" — attribution UTM / gclid / fbclid
+  Remplace l'ancienne balise qui réécrivait tous les liens rockfi.fr et l'URL courante.
+
+  Ce que fait cette version :
+  1. Si l'URL d'arrivée contient des paramètres de campagne, ils sont stockés dans le cookie
+     "attribution_params" (domaine .rockfi.fr, donc lisible aussi par client.rockfi.fr).
+     Une nouvelle campagne remplace la précédente (dernier clic).
+  2. Les valeurs sont ajoutées en champs cachés uniquement dans les formulaires de conversion
+     (formulaires qui contiennent un champ email).
+  Elle ne modifie plus aucun lien, ni l'URL de la page.
+
+  Déclencheur conseillé : All Pages (DOM Ready).
+-->
+<script>
+  (function () {
+    var KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid'];
+    var COOKIE = 'attribution_params';
+    var DOMAIN = '.rockfi.fr';
+    var MAX_AGE = 60 * 60 * 24 * 90; // 90 jours
+
+    function readStored() {
+      var m = document.cookie.match(new RegExp('(?:^|; )' + COOKIE + '=([^;]*)'));
+      if (!m) return {};
+      try {
+        return JSON.parse(decodeURIComponent(m[1])) || {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function store(data) {
+      document.cookie =
+        COOKIE + '=' + encodeURIComponent(JSON.stringify(data)) +
+        '; path=/; domain=' + DOMAIN + '; max-age=' + MAX_AGE + '; SameSite=Lax; Secure';
+    }
+
+    // 1. Capture depuis l'URL d'arrivée
+    var fromUrl = {};
+    var hasNew = false;
+    try {
+      var qs = new URLSearchParams(window.location.search);
+      for (var i = 0; i < KEYS.length; i++) {
+        var v = qs.get(KEYS[i]);
+        if (v) {
+          fromUrl[KEYS[i]] = v;
+          hasNew = true;
+        }
+      }
+    } catch (e) {}
+
+    if (hasNew) store(fromUrl);
+    var params = hasNew ? fromUrl : readStored();
+
+    // 2. Champs cachés dans les formulaires de conversion uniquement
+    function fillForm(form) {
+      if (!form || !form.querySelector('input[type="email"]')) return;
+      for (var key in params) {
+        if (!params.hasOwnProperty(key)) continue;
+        var input = form.querySelector('input[name="' + key + '"]');
+        if (!input) {
+          input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.setAttribute('data-name', key);
+          form.appendChild(input);
+        }
+        input.value = params[key];
+      }
+    }
+
+    function fillAll() {
+      var forms = document.querySelectorAll('form');
+      for (var j = 0; j < forms.length; j++) fillForm(forms[j]);
+    }
+
+    if (Object.keys(params).length) {
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fillAll);
+      else fillAll();
+
+      // Filet de sécurité : formulaires ajoutés après coup (modales, CMS…)
+      document.addEventListener('submit', function (e) { fillForm(e.target); }, true);
+    }
+  })();
+</script>

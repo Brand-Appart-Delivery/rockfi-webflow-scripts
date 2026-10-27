@@ -28,6 +28,7 @@ import { initNavDropdownHover } from "./nav-dropdown-hover";
 import { initFitScale } from "./fit-scale.js";
 import { initNavMenuLabel } from "./nav-menu-label.js";
 import { initNavScroll } from "./nav-scroll.js";
+import { initEmbedI18n } from "./embed-i18n.js";
 
 const BUILD_VERSION = new Date().toISOString().slice(0, 10);
 console.log(
@@ -64,4 +65,5 @@ onReady(() => {
   initStackCards();
   initNavDropdownHover();
   initFitScale();
+  initEmbedI18n();
 });

@@ -72,6 +72,9 @@
 //                                   data-video-autoplay. Voir video.scss ([data-video-bg]).
 //                                   Pour un hero, préférer data-video-hero (plus rapide).
 //   data-video-ratio="16/9"         ratio réel de la vidéo (avec data-video-bg). Défaut : 16/9.
+//   data-video-link                 (sur une carte) mode lien : bouton play et magnétisme
+//                                   conservés, mais le clic ouvre le lien de la carte
+//                                   au lieu de lancer la vidéo dans le bloc (ex. presse)
 //   data-video-host                 (sur un élément enfant) accueille le lecteur à la
 //                                   place de la carte entière ; prioritaire sur le reste
 //   data-video-captions="URL.vtt"   sous-titres
@@ -1027,11 +1030,15 @@ function setupPlayback({
         "play",
         "progress",
         "current-time",
+        "duration",
         "mute",
         "volume",
         ...(hasCaptions ? ["captions"] : []),
         "fullscreen",
       ],
+      // Temps écoulé / durée totale (par défaut Plyr affiche le temps restant, ex. "-1:11:39",
+      // ce qui se lit comme une durée erronée)
+      invertTime: false,
       i18n: getPlyrI18n(),
       youtube: YOUTUBE_OPTIONS,
     });
@@ -1528,8 +1535,22 @@ function initOne(media) {
   });
 }
 
+// Carte en mode lien (data-video-link) : bouton play et effet magnétique conservés,
+// mais le clic suit le lien de la carte (ex. vidéo YouTube dans un nouvel onglet)
+function initLinkCard(card) {
+  const trigger = card.querySelector(".video_controller");
+  const playBtn = trigger && trigger.querySelector(".video_controller-play");
+  const magnetScope = card.querySelector("[data-video-magnet-zone]") || card;
+  initMagnet(magnetScope, trigger, playBtn, readMagnet(card));
+  if (card.dataset.videoPlayer) {
+    loadDuration(card.dataset.videoPlayer, card.querySelector(".video_controller-time"), card.dataset.videoDuration);
+  }
+}
+
 // Cartes (personas, presse...)
 function initCard(card) {
+  if (card.hasAttribute("data-video-link")) return initLinkCard(card);
+
   const src = card.dataset.videoPlayer;
   if (!src) return;
 

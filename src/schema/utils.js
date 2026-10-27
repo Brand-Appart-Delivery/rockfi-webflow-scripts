@@ -6,9 +6,22 @@ export function pathnameStartsWith(prefix) {
   return getPathWithoutLocale().startsWith(prefix);
 }
 
+export function pathnameIs(path) {
+  return getPathWithoutLocale().replace(/\/+$/, "") === path;
+}
+
 export function isRealUrl(url) {
   return Boolean(url) && url !== "#" && !url.startsWith("#");
 }
+
+export function text(el) {
+  const value = el?.textContent?.replace(/\s+/g, " ").trim();
+  return value || null;
+}
+
+
+
+
 
 const MONTHS = {
   // Français
