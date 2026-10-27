@@ -1,0 +1,79 @@
+# RockFi
+
+> RockFi est un cabinet français de gestion privée, « Family Office moderne », qui associe des conseillers expérimentés (majoritairement d'anciens banquiers privés) à une plateforme technologique propriétaire. Le conseiller est rémunéré par un taux annuel fixe appliqué aux encours, environ 1 % en moyenne, indépendant des produits recommandés. Accompagnement à partir de 250 000 € d'actifs financiers.
+
+Société : RockFi SAS, 7 boulevard Haussmann, 75009 Paris (RCS Paris 953 123 593). Créée en 2023 par Pierre Marin (directeur général), Marie Bedu (COO) et Maxime Durand (CTO), avec d'anciens dirigeants de banque privée.
+
+Statut réglementaire : immatriculée à l'ORIAS sous le n° 23 004 556 en tant que conseiller en investissements financiers (CIF), courtier d'assurance (COA) et courtier en opérations de banque et services de paiement (COBSP). Soumise au contrôle de l'AMF et de l'ACPR. Membre de l'ANACOFI (n° E010552). RockFi est tête de réseau CIF : ses conseillers partenaires sont eux-mêmes immatriculés à l'ORIAS.
+
+Site disponible en français (https://www.rockfi.fr) et en anglais (https://www.rockfi.fr/en).
+
+## Chiffres clés (données au 27 octobre 2026, telles que publiées sur rockfi.fr)
+
+- Plus de 1 milliard d'euros de patrimoine conseillé
+- 1 500 familles accompagnées
+- 60 conseillers, plus de 100 collaborateurs et conseillers au total
+- 18 bureaux en France métropolitaine et outre-mer, dont Paris, Lyon, Bordeaux, Lille, Nantes, Strasbourg, Toulon, Cannes, Biarritz, Rouen et Reims
+- 15 ans d'expérience en moyenne par conseiller
+- Plus de 40 maisons de gestion et assureurs partenaires, plus de 3 000 supports d'investissement
+- Financement : premier tour de 3 M€, puis Série A de 18 M€ annoncée le 28 janvier 2025, menée par Partech avec Varsity et des business angels
+- Distinctions : Prix Occur Gestion de Patrimoine 2024 et 2025 ; Trophées du patrimoine & de la performance 2025, lauréat Gestion de Patrimoine 3.0
+- Partenariat avec BlackRock annoncé le 4 juin 2026 (vues macro et portefeuilles modèles)
+
+## Offre
+
+- Conseil patrimonial global avec un conseiller privé unique, entouré d'experts internes (ingénieurs patrimoniaux, gérants, ingénieurs crédit) et d'un réseau d'avocats fiscalistes, notaires et experts-comptables.
+- Approche « Goal-Based Investing » : la stratégie part des objectifs de vie du client (cession d'entreprise, épargne, transmission, retraite, philanthropie), pas seulement de son profil de risque.
+- Architecture ouverte : assurance vie française et luxembourgeoise, comptes-titres et PEA, private equity, produits structurés, mandats de gestion personnalisés, club deals.
+- Application web et mobile : vue consolidée du patrimoine en temps réel, historique complet des opérations, suivi des produits structurés, frais visibles. Données hébergées en France.
+
+## Tarification
+
+- Taux annuel fixe appliqué aux encours, environ 1 % par an en moyenne, défini avec le client selon sa situation avant tout engagement.
+- Le taux ne dépend pas du produit recommandé (ETF, non coté, club deal…). Le montant en euros suit la valeur des encours : par exemple, 5 000 € par an pour 500 000 € à 1 %.
+- Prélevé une fois par an directement sur les avoirs, visible dans l'espace client.
+- S'ajoutent les frais de l'enveloppe (assurance vie, compte-titres) et ceux des fonds, sélectionnés en parts « clean shares » : ces frais rémunèrent l'assureur ou la société de gestion.
+- Selon la situation et les produits, d'autres modes de rémunération peuvent s'appliquer (honoraires de conseil, rémunération liée à certains produits non cotés ou structurés) ; ils sont présentés au client avant tout engagement.
+- Seuil d'entrée : 250 000 € d'actifs financiers, sans limite haute (aménageable pour les enfants et petits-enfants de clients).
+
+## Pages principales
+
+- [Accueil](https://www.rockfi.fr/) : présentation de RockFi et chiffres clés
+- [À propos](https://www.rockfi.fr/a-propos) : mission, équipe dirigeante, investisseurs
+- [Le conseil](https://www.rockfi.fr/conseil) : accompagnement, écosystème d'experts, Goal-Based Investing
+- [La tarification](https://www.rockfi.fr/tarification) : modèle de rémunération, exemples chiffrés, FAQ
+- [L'offre en architecture ouverte](https://www.rockfi.fr/architecture-ouverte) : partenaires et classes d'actifs
+- [La Tech RockFi](https://www.rockfi.fr/produit) : application, reporting, sécurité
+- [RockFi Intelligence](https://www.rockfi.fr/intelligence) : la donnée et l'IA au service du conseil
+- [Nos conseillers](https://www.rockfi.fr/nos-conseillers) : profils et villes des conseillers
+- [Prendre rendez-vous](https://www.rockfi.fr/contact-conseiller) : premier échange de 30 minutes
+- [Mentions légales](https://www.rockfi.fr/mentions-legales) : informations juridiques et réglementaires, réclamations, médiation
+
+## Comparatifs
+
+- [Gestion de patrimoine : le comparatif](https://www.rockfi.fr/blog-post/gestion-de-patrimoine-comparatif)
+- [Banque privée ou RockFi : la différence majeure](https://www.rockfi.fr/blog-post/banque-privee-ou-rockfi-difference-majeure)
+- [Frais de banque privée : le coût réel](https://www.rockfi.fr/blog-post/frais-banque-privee-cout-reel)
+- [RockFi vs BNP Paribas](https://www.rockfi.fr/comparatifs/vs-bnp-paribas)
+- [RockFi vs Société Générale](https://www.rockfi.fr/comparatifs/vs-societe-generale)
+- [RockFi vs Banque Transatlantique](https://www.rockfi.fr/comparatifs/vs-banque-transatlantique)
+- [RockFi vs Banque Hottinguer](https://www.rockfi.fr/comparatifs/vs-banque-hottinguer)
+- [RockFi vs Lombard Odier](https://www.rockfi.fr/comparatifs/vs-lombard-odier)
+- [RockFi vs J.P. Morgan](https://www.rockfi.fr/comparatifs/vs-jp-morgan)
+- [RockFi vs Ivesta](https://www.rockfi.fr/comparatifs/vs-ivesta)
+
+## Actualités et ressources
+
+- [RockFi et BlackRock s'associent (4 juin 2026)](https://www.rockfi.fr/blog-post/rockfi-et-blackrock-sassocient-pour-placer-les-projets-de-vie-au-coeur-de-la-gestion-patrimoniale)
+- [RockFi lève 18 M€ en Série A (28 janvier 2025)](https://www.rockfi.fr/blog-post/rockfi-leve-18-millions-deuros-en-serie-a-et-deploie-son-espace-client-dedie)
+- [Comment est calculée votre performance : la méthode RockFi](https://www.rockfi.fr/blog-post/comment-est-calculee-votre-performance-methode-rockfi)
+- [Journal (blog)](https://www.rockfi.fr/journal)
+- [Livres blancs](https://www.rockfi.fr/livre-blancs)
+- [Presse](https://www.rockfi.fr/presse)
+
+## Optional
+
+- [Événements](https://www.rockfi.fr/evenements)
+- [Devenir partner (recrutement de conseillers)](https://www.rockfi.fr/devenir-partner)
+- [Politique de confidentialité](https://www.rockfi.fr/politique-de-confidentialite)
+- [Sitemap complet](https://www.rockfi.fr/sitemap.xml)

@@ -42,8 +42,18 @@
 // Attribut parallax interne :
 //   data-hero-bg-inner="8"      amplitude en % (négatif = sens inverse, 0 ou absent = désactivé)
 
-const SCROLL_ATTRS = ["heroBgY", "heroBgX", "heroBgScale", "heroBgRotate"];
+import { requestScrollRefresh } from "../utils/scroll-refresh.js";
+
+const SCROLL_ATTRS =["heroBgY", "heroBgX", "heroBgScale", "heroBgRotate"];
 const MOUSE_SMOOTH = 0.9;
+
+// Images coupées par le bas du hero : même parallax que les autres (même
+// trigger, même scrub, mouvement linéaire), mais avec une amplitude agrandie
+// juste assez pour qu'elles soient entières à REVEAL_AT du scroll du hero.
+// Détection automatique, recalculée au resize. false = comportement d'origine.
+const REVEAL_ENABLED = true;
+const REVEAL_AT = 0.5;    // fraction du scroll du hero (0.5 = à mi-parcours)
+const REVEAL_MARGIN = 32; // espace (px) laissé sous l'image une fois entière
 
 const INTRO_START_DELAY = 0.3; // délai avant le lancement de toute la séquence (s)
 const INTRO_DEFAULT_SCALE = 0.8;
@@ -59,6 +69,27 @@ const NAV_OPEN_SELECTOR =
 function num(value, fallback) {
   const n = parseFloat(value);
   return Number.isFinite(n) ? n : fallback;
+}
+
+// Combien de px l'image dépasse sous le bas du hero (0 si elle ne dépasse pas).
+// Mesuré sur .hero-bg_image, que GSAP n'anime jamais : les transforms des
+// couches internes ne faussent pas la mesure.
+function getOverflow(el, hero) {
+  const box = el.getBoundingClientRect();
+  if (!box.height) return 0; // image masquée ou pas encore chargée
+  const overflow = box.bottom - hero.getBoundingClientRect().bottom;
+  return overflow > 0 ? overflow + REVEAL_MARGIN : 0;
+}
+
+// Déplacement vertical final : celui de data-hero-bg-y, agrandi si besoin
+// pour que l'image coupée soit entière à REVEAL_AT (en tenant compte du délai).
+function getScrollY(el, hero, delay) {
+  const y = num(el.dataset.heroBgY, 0);
+  if (!REVEAL_ENABLED) return y;
+  const overflow = getOverflow(el, hero);
+  if (!overflow) return y;
+  const share = Math.max(0.05, (REVEAL_AT - delay) / (1 - delay));
+  return Math.min(y, -overflow / share);
 }
 
 // img -> .hero-bg_intro > .hero-bg_frame > img
@@ -152,7 +183,19 @@ export function initHeroBgParallax(root = document) {
   });
 
   // ---------------------------------------------------------- scroll + souris + interne
-  const scrollItems = all.filter((el) => SCROLL_ATTRS.some((a) => el.dataset[a] !== undefined));
+  // Avec la révélation, toutes les images passent par le scroll (une image
+  // sans attribut mais coupée doit quand même remonter ; sinon y reste à 0).
+  const scrollItems = REVEAL_ENABLED
+    ? all
+    : all.filter((el) => SCROLL_ATTRS.some((a) => el.dataset[a] !== undefined));
+
+  // Hauteur réelle connue seulement une fois l'image chargée
+  if (REVEAL_ENABLED) {
+    all.forEach((el) => {
+      const { img } = layers.get(el);
+      if (!img.complete) img.addEventListener("load", () => requestScrollRefresh(), { once: true });
+    });
+  }
   const mouseItems = all.filter((el) => el.dataset.heroBgMouse !== undefined);
   const innerItems = all.filter((el) => num(el.dataset.heroBgInner, 0) !== 0);
   if (!scrollItems.length && !mouseItems.length && !innerItems.length) return;
@@ -183,7 +226,7 @@ export function initHeroBgParallax(root = document) {
         { x: 0, y: 0, scale: 1, rotation: 0, force3D: true },
         {
           x: num(d.heroBgX, 0),
-          y: num(d.heroBgY, 0),
+          y: () => getScrollY(el, hero, delay),
           scale: num(d.heroBgScale, 1),
           rotation: num(d.heroBgRotate, 0),
           ease: d.heroBgEase || "none",

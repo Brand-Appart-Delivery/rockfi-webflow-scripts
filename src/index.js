@@ -31,6 +31,7 @@ import { initNavScroll } from "./nav-scroll.js";
 import { initEmbedI18n } from "./embed-i18n.js";
 import { initEmailGuard } from "./email-guard.js";
 import { initResourceFileLink } from "./resource-file-link.js";
+import { initLocalizeLinks } from "./localize-links.js";
 
 const BUILD_VERSION = new Date().toISOString().slice(0, 10);
 console.log(
@@ -46,6 +47,7 @@ onReady(() => {
   initBlogFaq();
   initShareToast();
   initEmbeds();
+  initLocalizeLinks(); // après les embeds : traduit aussi les liens des [button]
   initCompareTable();
   initBlogToc();
   initAnimations();

@@ -9,8 +9,9 @@ export function transformCalc(html) {
       .replace(/<\/p>|<br\s*\/?>/gi, "\n")
       .replace(/<[^>]+>/g, "")
       .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+      .map((line) => line.replace(/&nbsp;/g, " ").trim())
+      // Lignes vides et caractère invisible que Webflow insère dans les paragraphes vides
+      .filter((line) => line && line !== "‍");
 
     if (!lines.length) return match;
 

@@ -1,0 +1,47 @@
+# robots.txt — www.rockfi.fr
+# Mis à jour le 27 octobre 2026.
+#
+# Choix : les robots IA sont autorisés explicitement. Le site est public et
+# commercial ; RockFi souhaite être cité correctement par les assistants IA
+# (moteurs de réponse et modèles). Données clients : hors de ce site.
+# Pour revenir en arrière sur un robot, remplacer « Allow: / » par « Disallow: / ».
+
+# OpenAI : entraînement des modèles
+User-agent: GPTBot
+Allow: /
+
+# OpenAI : recherche ChatGPT et visites demandées par un utilisateur
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+# Anthropic : entraînement des modèles
+User-agent: ClaudeBot
+Allow: /
+
+# Anthropic : recherche Claude et visites demandées par un utilisateur
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+# Perplexity : index de recherche et visites demandées par un utilisateur
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Google : utilisation des contenus par Gemini et Vertex AI.
+# N'a aucun effet sur Google Search ni sur les AI Overviews (gérés par Googlebot).
+User-agent: Google-Extended
+Allow: /
+
+# Tous les autres robots
+User-agent: *
+Allow: /
+
+Sitemap: https://www.rockfi.fr/sitemap.xml

@@ -2,6 +2,11 @@
 import { requestScrollRefresh } from "./utils/scroll-refresh.js";
 import { prefersReducedMotion } from "./utils/motion-preference.js";
 
+// Interrupteur du scroll fluide (Lenis).
+// false = scroll natif du navigateur (demande cliente, oct. 2026).
+// Repasser à true pour réactiver Lenis : tout le reste du code est conservé.
+const SMOOTH_SCROLL_ENABLED = false;
+
 let lenisInstance = null;
 
 const ANCHOR_DURATION = 2; // secondes (1.6 = plus vif, 2.5 = très lent)
@@ -105,6 +110,7 @@ function initAnchors() {
 // (animate/setup.js ne fait plus qu'enregistrer le plugin.)
 export function initLenis() {
   if (lenisInstance) return lenisInstance; // jamais deux instances
+  if (!SMOOTH_SCROLL_ENABLED) return null;
   if (typeof window.Lenis === "undefined") return null;
   if (prefersReducedMotion()) return null;
 
