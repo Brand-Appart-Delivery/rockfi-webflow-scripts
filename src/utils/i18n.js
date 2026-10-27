@@ -48,6 +48,11 @@ const DICT = {
     "compare.na": "Non communiqué",
     "compare.yes": "Oui",
     "compare.rival": "Concurrent",
+    // Contrôle des emails
+    "email.invalid": "Cette adresse email n'est pas valide.",
+    "email.disposable": "Les adresses email temporaires ne sont pas acceptées. Merci d'utiliser votre adresse habituelle.",
+    "email.fake": "Merci de saisir votre véritable adresse email.",
+    "email.suggest": "Vouliez-vous dire {email} ?",
   },
   en: {
     "menu.open": "Menu",
@@ -76,6 +81,10 @@ const DICT = {
     "compare.na": "Not disclosed",
     "compare.yes": "Yes",
     "compare.rival": "Competitor",
+    "email.invalid": "This email address is not valid.",
+    "email.disposable": "Temporary email addresses are not accepted. Please use your usual address.",
+    "email.fake": "Please enter your real email address.",
+    "email.suggest": "Did you mean {email}?",
   },
 };
 

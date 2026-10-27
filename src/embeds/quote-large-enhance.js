@@ -1,7 +1,7 @@
 // src/embeds/quote-large-enhance.js
 
 const QUOTE_LARGE_BLOCK_REGEX =
-  /(?:<p>)?\[quote-large\](?:<\/p>)?([\s\S]*?)(?:<p>)?\[\/quote-large\](?:<\/p>)?/gi;
+  /(?:<p(?:\s[^>]*)?>)?\[quote-large\](?:<\/p>)?([\s\S]*?)(?:<p(?:\s[^>]*)?>)?\[\/quote-large\](?:<\/p>)?/gi;
 
 export function transformQuoteLarge(html) {
   return html.replace(QUOTE_LARGE_BLOCK_REGEX, (match, body) => {

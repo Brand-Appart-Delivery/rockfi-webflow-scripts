@@ -1,0 +1,164 @@
+<style>
+  /* Les parents ne doivent pas s'élargir au contenu du tableau */
+  .layout-juridique,
+  .juridique-content,
+  .rich-text_juridique,
+  .rich-text_juridique .w-embed {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .juridique-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Wrapper : sort de la colonne vers la gauche (via le script),
+     s'arrête à la marge droite de la page, scroll si trop étroit */
+  .rt-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+    padding-right: 2rem; /* marge droite de la page (comme .padding-global) */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* anciens Edge/IE */
+  }
+
+  .rt-table-wrapper::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, iOS */
+  }
+
+  @media screen and (max-width: 767px) {
+    .rt-table-wrapper {
+      padding-right: 1.25rem;
+    }
+  }
+
+  .rt-table-wrapper .rt-table {
+    width: 100%;
+    min-width: 62rem; /* somme des colonnes */
+  }
+
+  .rt-table-wrapper .rt-table th:nth-child(1) { min-width: 14rem; }
+  .rt-table-wrapper .rt-table th:nth-child(2) { min-width: 16rem; }
+  .rt-table-wrapper .rt-table th:nth-child(3) { min-width: 8rem; }
+  .rt-table-wrapper .rt-table th:nth-child(4) { min-width: 10rem; }
+  .rt-table-wrapper .rt-table th:nth-child(5) { min-width: 14rem; }
+</style>
+
+<div class="rt-table-wrapper" role="region" aria-label="Table of personal data processing" tabindex="0">
+  <table class="rt-table">
+    <thead>
+      <tr>
+        <th scope="col">Purpose of processing</th>
+        <th scope="col">Categories of Personal Data</th>
+        <th scope="col">RockFi's role</th>
+        <th scope="col">Legal basis</th>
+        <th scope="col">Retention period</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Website management</td>
+        <td>Identification and contact data (last name, first name, email address, phone), content of your request</td>
+        <td>Data controller</td>
+        <td>Legitimate interest</td>
+        <td>3 years from the last contact.</td>
+      </tr>
+      <tr>
+        <td>Prospect relationship management (responding to information requests, booking appointments, newsletters, event invitations, marketing communications, etc.)</td>
+        <td>Identification and contact data, communication preferences, event registrations, completed forms</td>
+        <td>Data controller</td>
+        <td>Legitimate interest/Consent (where required)</td>
+        <td>3 years from the last contact or until consent is withdrawn.</td>
+      </tr>
+      <tr>
+        <td>Client relationship management (onboarding, contracting, updates to the terms and conditions, newsletters, etc.)</td>
+        <td>Identification and contact data, data on personal, family, wealth, financial and tax situation, supporting documents.</td>
+        <td>Data controller</td>
+        <td>Performance of the contract, pre-contractual measures and legal obligations</td>
+        <td>For the duration of the contract or business relationship, then archived for 5 years from its termination.</td>
+      </tr>
+      <tr>
+        <td>Recruitment management</td>
+        <td>Identification data, contact details, CV, cover letter, qualifications, professional experience</td>
+        <td>Data controller</td>
+        <td>Pre-contractual measures and legitimate interest</td>
+        <td>2 years after the last contact with the candidate, unless the candidate objects or agrees to a different period.</td>
+      </tr>
+      <tr>
+        <td>Handling of GDPR rights requests</td>
+        <td>Identification data, contact details, proof of identity (where applicable), content of the request</td>
+        <td>Data controller</td>
+        <td>Legal obligation</td>
+        <td>5 years from the handling of the request.</td>
+      </tr>
+      <tr>
+        <td>Management of disputes, pre-litigation and requests from competent authorities</td>
+        <td>Identification data, contractual data, correspondence, documents relevant to the case</td>
+        <td>Data controller</td>
+        <td>Legal obligation and legitimate interest</td>
+        <td>For the duration of the dispute, then in accordance with the applicable limitation periods.</td>
+      </tr>
+      <tr>
+        <td>Supplier relationship management</td>
+        <td>Identification and contact data (last name, first name, email address, phone number), professional contact details.</td>
+        <td>Data controller</td>
+        <td>Performance of the contract or pre-contractual measures</td>
+        <td>For the duration of the contractual relationship.</td>
+      </tr>
+      <tr>
+        <td>Compliance with anti-money laundering and counter-terrorist financing obligations (AML/CFT)</td>
+        <td>Identification data, proof of identity and address, information on the source of funds, wealth situation.</td>
+        <td>Data controller*</td>
+        <td>Legal obligation</td>
+        <td>5 years from the end of the business relationship, in accordance with the French Monetary and Financial Code.</td>
+      </tr>
+      <tr>
+        <td>Transmission of the necessary information to financial institutions (custodians, asset managers, insurers, etc.)</td>
+        <td>Identification data, wealth, financial and tax information, documents required to open or manage the products subscribed</td>
+        <td>Data controller</td>
+        <td>Performance of the contract</td>
+        <td>For the time needed to carry out the transaction.</td>
+      </tr>
+      <tr>
+        <td>Management of our app and information system security</td>
+        <td>Identification data, login credentials, connection logs, technical and browsing data</td>
+        <td>Data controller</td>
+        <td>Legitimate interest</td>
+        <td>For the duration of the relationship, then archived where necessary for security purposes.</td>
+      </tr>
+      <tr>
+        <td>Audience measurement, service improvement, usage statistics and analysis</td>
+        <td>Browsing data, cookies, IP address, service usage data, satisfaction surveys, aggregated statistics</td>
+        <td>Data controller</td>
+        <td>Legitimate interest or consent where required (cookies)</td>
+        <td>See the Cookie Policy.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  (function () {
+    function fit() {
+      document.querySelectorAll('.rt-table-wrapper').forEach(function (wrap) {
+        var rect = wrap.parentElement.getBoundingClientRect();
+        var vw = document.documentElement.clientWidth;
+        var left = Math.max(0, rect.left);
+
+        wrap.style.width = vw + 'px';
+        wrap.style.marginLeft = -left + 'px';
+        wrap.style.paddingLeft = left + 'px';
+      });
+    }
+
+    fit();
+    window.addEventListener('load', fit);
+    window.addEventListener('resize', fit);
+    if (window.ResizeObserver) {
+      document.querySelectorAll('.rt-table-wrapper').forEach(function (w) {
+        new ResizeObserver(fit).observe(w.parentElement);
+      });
+    }
+  })();
+</script>

@@ -156,9 +156,13 @@ const DICT = {
   "Une main tenant un petit tournevis et manipulant les composants internes d'une montre mécanique pour des réparations ou un assemblage précis.": "A hand holding a small screwdriver and working on the internal components of a mechanical watch for precise repair or assembly.",
   "Une salle élégante avec une grande bibliothèque en bois remplie de livres, une table de billard au centre avec des boules disposées dessus et une personne floue en mouvement près de la table.": "An elegant room with a large wooden bookcase full of books, a billiard table in the centre with balls on it and a blurred person moving near the table.",
   "Écran de smartphone affichant une application de portefeuille financier en mode sombre, montrant une valeur de 1 483 269 euros au 21 avril 2026 avec une hausse de 62% (+568 000 €), un graphique de performance croissante de janvier 2022 à avril 2026, et des onglets pour patrimoine total et capital investi.": "Smartphone screen showing a portfolio app in dark mode, with a value of €1,483,269 on 21 April 2026, up 62% (+€568,000), a rising performance chart from January 2022 to April 2026, and tabs for total wealth and invested capital.",
+  // Boutons d'envoi de formulaire : non traduisibles dans Webflow Localization
+  "Télécharger la ressource": "Download the resource",
+  "En attente ...": "Please wait...",
 };
 
-const ATTRS = ["alt", "aria-label", "title", "placeholder"];
+// data-wait : libellé affiché par Webflow pendant l'envoi d'un formulaire
+const ATTRS = ["alt", "aria-label", "title", "placeholder", "data-wait"];
 const SKIP = /^(SCRIPT|STYLE|TEXTAREA|CODE|PRE|NOSCRIPT)$/;
 
 function translate(root) {
@@ -183,6 +187,12 @@ function translate(root) {
       const value = el.getAttribute(attr);
       if (value && DICT[value.trim()]) el.setAttribute(attr, DICT[value.trim()]);
     });
+  });
+
+  // Libellé des boutons <input type="submit"> (porté par value)
+  root.querySelectorAll('input[type="submit"]').forEach((btn) => {
+    const label = DICT[btn.value.trim()];
+    if (label) btn.value = label;
   });
 }
 

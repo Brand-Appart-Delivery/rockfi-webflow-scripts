@@ -1,7 +1,7 @@
 // src/embeds/calc-enhance.js
 
 const CALC_BLOCK_REGEX =
-  /(?:<p>)?\[calc\](?:<\/p>)?([\s\S]*?)(?:<p>)?\[\/calc\](?:<\/p>)?/gi;
+  /(?:<p(?:\s[^>]*)?>)?\[calc\](?:<\/p>)?([\s\S]*?)(?:<p(?:\s[^>]*)?>)?\[\/calc\](?:<\/p>)?/gi;
 
 export function transformCalc(html) {
   return html.replace(CALC_BLOCK_REGEX, (match, body) => {

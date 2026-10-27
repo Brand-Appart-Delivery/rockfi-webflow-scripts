@@ -2,7 +2,7 @@
 import { parseAttrs } from "../utils/parse-attrs.js";
 
 const BUTTON_BLOCK_REGEX =
-  /(?:<p>)?\[button([^\]]*)\](?:<\/p>)?([\s\S]*?)(?:<p>)?\[\/button\](?:<\/p>)?/gi;
+  /(?:<p(?:\s[^>]*)?>)?\[button([^\]]*)\](?:<\/p>)?([\s\S]*?)(?:<p(?:\s[^>]*)?>)?\[\/button\](?:<\/p>)?/gi;
 
 function buildIconSVG(idSuffix) {
   const raw = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">

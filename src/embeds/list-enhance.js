@@ -1,7 +1,7 @@
 // src/embeds/list-enhance.js
 
 const LIST_BLOCK_REGEX =
-  /(?:<p>)?\[list\](?:<\/p>)?([\s\S]*?)(?:<p>)?\[\/list\](?:<\/p>)?/gi;
+  /(?:<p(?:\s[^>]*)?>)?\[list\](?:<\/p>)?([\s\S]*?)(?:<p(?:\s[^>]*)?>)?\[\/list\](?:<\/p>)?/gi;
 
 const BOLD_REGEX = /\[b\](.*?)\[\/b\]/gi;
 

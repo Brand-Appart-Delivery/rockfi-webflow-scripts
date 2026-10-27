@@ -8,20 +8,24 @@ export function initNavHero() {
   const hero = document.querySelector("[data-nav-hero]");
   if (!nav || !hero) return;
 
+  // Barre de menu (sous la bannière) : c'est son haut qui sert de repère
+  const bar = nav.querySelector(".navbar_component") || nav;
+
   let observer = null;
 
   function observe() {
     if (observer) observer.disconnect();
 
-    // Le hero est "terminé" quand son bas passe sous le bas de la nav (bannière incluse)
-    const navHeight = Math.round(nav.getBoundingClientRect().height);
+    // Le hero est "terminé" quand son bas passe au-dessus du haut de la barre de menu
+    // Au moins 1px : sans marge, la sortie par le haut de l'écran ne serait pas détectée
+    const barTop = Math.max(1, Math.round(bar.getBoundingClientRect().top));
 
     observer = new IntersectionObserver(
       ([entry]) => {
-        const past = !entry.isIntersecting && entry.boundingClientRect.bottom <= navHeight;
+        const past = !entry.isIntersecting && entry.boundingClientRect.bottom <= barTop;
         nav.classList.toggle("is-past-hero", past);
       },
-      { rootMargin: `-${navHeight}px 0px 0px 0px`, threshold: 0 },
+      { rootMargin: `-${barTop}px 0px 0px 0px`, threshold: 0 },
     );
     observer.observe(hero);
   }

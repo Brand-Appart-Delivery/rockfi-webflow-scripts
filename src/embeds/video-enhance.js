@@ -6,7 +6,7 @@
 import { t, getLang, getLangLabel } from "../utils/i18n.js";
 import { parseAttrs } from "../utils/parse-attrs.js";
 
-const VIDEO_BLOCK_REGEX = /(?:<p>)?\[video([^\]]*)\](?:<\/p>)?/gi;
+const VIDEO_BLOCK_REGEX = /(?:<p(?:\s[^>]*)?>)?\[video([^\]]*)\](?:<\/p>)?/gi;
 
 // Traduction accessible de l'interface Plyr
 const getPlyrI18n = () => ({

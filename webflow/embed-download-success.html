@@ -1,0 +1,101 @@
+<!--
+  Icône animée "téléchargement lancé" : bac + flèche + pastille jaune + check.
+  Embed du bloc .w-form-done sur le modèle de page Ressources.
+  Même trait, mêmes couleurs et mêmes temps que l'ancienne enveloppe
+  (archive/embed-mail-success.html).
+-->
+<style>
+  .dl-success {
+    display: block;
+    margin: 0 auto;
+    overflow: visible;
+  }
+  .dl-success path {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  /* Bac : se dessine */
+  .dl-success .ds-tray {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: ds-draw .6s cubic-bezier(.65,0,.35,1) forwards;
+  }
+
+  /* Flèche : tige puis pointe, puis petite descente vers le bac */
+  .dl-success .ds-arrow {
+    animation: ds-drop .5s ease-out 1.2s;
+  }
+  .dl-success .ds-shaft {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: ds-draw .4s cubic-bezier(.65,0,.35,1) .3s forwards;
+  }
+  .dl-success .ds-head {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: ds-draw .3s cubic-bezier(.65,0,.35,1) .55s forwards;
+  }
+
+  /* Pastille jaune : pop avec rebond */
+  .dl-success .ds-badge {
+    opacity: 0;
+    transform: scale(0);
+    animation: ds-pop .5s cubic-bezier(.34,1.56,.64,1) .7s forwards;
+  }
+
+  /* Check : se trace */
+  .dl-success .ds-check {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: ds-draw .35s ease-out 1.05s forwards;
+  }
+
+  @keyframes ds-draw {
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes ds-pop {
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes ds-drop {
+    0%, 100% { transform: translateY(0); }
+    40%      { transform: translateY(5px); }
+    70%      { transform: translateY(0); }
+  }
+
+  /* Accessibilité : réduit les animations si demandé par l'OS */
+  @media (prefers-reduced-motion: reduce) {
+    .dl-success,
+    .dl-success * {
+      animation-duration: .01s !important;
+      animation-delay: 0s !important;
+    }
+  }
+</style>
+
+<svg class="dl-success" width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <!-- Bac de réception -->
+  <path class="ds-tray" pathLength="1"
+    d="M9 30.6V47.7C9 49.1912 10.2088 50.4 11.7 50.4H51.3C52.7912 50.4 54 49.1912 54 47.7V30.6"
+    stroke="#1A1A1A" stroke-width="1.26" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Flèche vers le bas -->
+  <g class="ds-arrow">
+    <path class="ds-shaft" pathLength="1"
+      d="M31.5 12.6V39.6"
+      stroke="#1A1A1A" stroke-width="1.26" stroke-linecap="round" stroke-linejoin="round"/>
+    <path class="ds-head" pathLength="1"
+      d="M22.5 30.6L31.5 39.6L40.5 30.6"
+      stroke="#1A1A1A" stroke-width="1.26" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Pastille jaune -->
+  <path class="ds-badge"
+    d="M52.1992 63.8984C59.6551 63.8984 65.6992 57.8543 65.6992 50.3984C65.6992 42.9426 59.6551 36.8984 52.1992 36.8984C44.7434 36.8984 38.6992 42.9426 38.6992 50.3984C38.6992 57.8543 44.7434 63.8984 52.1992 63.8984Z"
+    fill="#E5F33E" stroke="white" stroke-width="2.7"/>
+
+  <!-- Check -->
+  <path class="ds-check" pathLength="1"
+    d="M45.8984 50.3984L50.3984 54.8984L58.4984 45.8984"
+    stroke="#1A1A1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

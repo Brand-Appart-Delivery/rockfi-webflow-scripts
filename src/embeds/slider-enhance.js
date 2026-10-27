@@ -6,7 +6,7 @@
 import { t } from "../utils/i18n.js";
 
 const SLIDER_BLOCK_REGEX =
-  /(?:<p>)?\[slider\](?:<\/p>)?([\s\S]*?)(?:<p>)?\[\/slider\](?:<\/p>)?/gi;
+  /(?:<p(?:\s[^>]*)?>)?\[slider\](?:<\/p>)?([\s\S]*?)(?:<p(?:\s[^>]*)?>)?\[\/slider\](?:<\/p>)?/gi;
 
 // SVG d'origine conservé (inversé pour prev via votre règle SCSS transform: scaleX(-1))
 const CHEVRON_SVG =

@@ -29,6 +29,8 @@ import { initFitScale } from "./fit-scale.js";
 import { initNavMenuLabel } from "./nav-menu-label.js";
 import { initNavScroll } from "./nav-scroll.js";
 import { initEmbedI18n } from "./embed-i18n.js";
+import { initEmailGuard } from "./email-guard.js";
+import { initResourceFileLink } from "./resource-file-link.js";
 
 const BUILD_VERSION = new Date().toISOString().slice(0, 10);
 console.log(
@@ -66,4 +68,6 @@ onReady(() => {
   initNavDropdownHover();
   initFitScale();
   initEmbedI18n();
+  initEmailGuard();
+  initResourceFileLink();
 });

@@ -2,7 +2,7 @@
 import { parseAttrs } from "../utils/parse-attrs.js";
 
 const QUOTE_BLOCK_REGEX =
-  /(?:<p>)?\[quote(?=[\s\]])([^\]]*)\](?:<\/p>)?([\s\S]*?)(?:<p>)?\[\/quote\](?:<\/p>)?/gi;
+  /(?:<p(?:\s[^>]*)?>)?\[quote(?=[\s\]])([^\]]*)\](?:<\/p>)?([\s\S]*?)(?:<p(?:\s[^>]*)?>)?\[\/quote\](?:<\/p>)?/gi;
 
 export function transformQuote(html) {
   return html.replace(QUOTE_BLOCK_REGEX, (match, attrString, body) => {
