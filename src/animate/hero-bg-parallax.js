@@ -51,7 +51,7 @@ const MOUSE_SMOOTH = 0.9;
 // trigger, même scrub, mouvement linéaire), mais avec une amplitude agrandie
 // juste assez pour qu'elles soient entières à REVEAL_AT du scroll du hero.
 // Détection automatique, recalculée au resize. false = comportement d'origine.
-const REVEAL_ENABLED = true;
+const REVEAL_ENABLED = false;
 const REVEAL_AT = 0.5;    // fraction du scroll du hero (0.5 = à mi-parcours)
 const REVEAL_MARGIN = 32; // espace (px) laissé sous l'image une fois entière
 

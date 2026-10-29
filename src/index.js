@@ -32,6 +32,8 @@ import { initEmbedI18n } from "./embed-i18n.js";
 import { initEmailGuard } from "./email-guard.js";
 import { initResourceFileLink } from "./resource-file-link.js";
 import { initLocalizeLinks } from "./localize-links.js";
+import { initLocaleLinksA11y } from "./locale-links-a11y.js";
+import { initListPaginationCanonical } from "./list-pagination-canonical.js";
 
 const BUILD_VERSION = new Date().toISOString().slice(0, 10);
 console.log(
@@ -41,6 +43,8 @@ console.log(
 
 onReady(() => {
   initCore();
+  initLocaleLinksA11y();
+  initListPaginationCanonical();
   initSpeakersSlot();
   initCollapses();
   initBlogAccordion();

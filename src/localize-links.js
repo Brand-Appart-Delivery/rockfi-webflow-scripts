@@ -47,7 +47,9 @@ const ITEMS = {
   "blog-post": {
     "rockfi-intelligence-lia-au-service-de-la-gestion-privee": "rockfi-intelligence-ai-for-private-wealth-management",
     "rockfi-accueille-laurent-garret-ex-directeur-general-de-neuflize-obc": "laurent-garret-former-ceo-of-neuflize-obc-joins-rockfi",
-    "rockfi-lance-rockfi-philanthropy-son-fonds-de-dotation-pour-soutenir-des-associations-dinteret-general": "rockfi-launches-rockfi-philanthropy-endowment-fund",
+    // Philanthropy (blog) : le slug EN n'est pas publié, l'URL EN garde le slug FR.
+    // Le jour où la version EN est publiée, remettre :
+    // "rockfi-lance-rockfi-philanthropy-son-fonds-de-dotation-pour-soutenir-des-associations-dinteret-general": "rockfi-launches-rockfi-philanthropy-endowment-fund",
     "banque-privee-ou-rockfi-difference-majeure": "private-banking-or-rockfi-the-major-difference",
     "investir-dans-le-non-cote-les-quatre-portes-d-entree": "investing-in-unlisted-assets-four-entry-points",
     "gestion-de-patrimoine-comparatif": "wealth-management-comparison-2026",
