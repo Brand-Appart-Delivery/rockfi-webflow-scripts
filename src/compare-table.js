@@ -247,17 +247,32 @@ function bindSticky(root) {
   let ticking = false;
   let shown = null;
 
+  // Mobile (≤ 767 px) : le tableau défile en horizontal, position: sticky ne
+  // marche pas ; l'en-tête est décalé à la main. Au-delà, sticky natif (CSS).
+  const mobile = window.matchMedia("(max-width: 767px)");
+
+  // Hauteur de la nav : position de collage de l'en-tête (sticky natif)
+  function setTop() {
+    root.style.setProperty("--rt-compare-top", `${getStickyTop()}px`);
+  }
+  setTop();
+  const nav = document.querySelector(".nav_fixed");
+  if (nav && typeof ResizeObserver !== "undefined") new ResizeObserver(setTop).observe(nav);
+  window.addEventListener("resize", setTop);
+
   function update() {
     ticking = false;
 
     const top = getStickyTop();
 
-    // L'en-tête est décalé à la main plutôt qu'en position: sticky, qui ne
-    // marche pas avec un overflow (scroll mobile, overflow hidden de la section).
-    const tableRect = root.getBoundingClientRect();
-    const max = Math.max(tableRect.height - thead.offsetHeight * 2, 0);
-    const shift = Math.min(Math.max(top - tableRect.top, 0), max);
-    root.style.setProperty("--rt-compare-shift", `${shift}px`);
+    if (mobile.matches) {
+      const tableRect = root.getBoundingClientRect();
+      const max = Math.max(tableRect.height - thead.offsetHeight * 2, 0);
+      const shift = Math.min(Math.max(top - tableRect.top, 0), max);
+      root.style.setProperty("--rt-compare-shift", `${shift}px`);
+    } else {
+      root.style.removeProperty("--rt-compare-shift");
+    }
 
     // Le titre de groupe affiché est celui du dernier groupe dont la ligne de
     // titre est entièrement passée sous l'en-tête.

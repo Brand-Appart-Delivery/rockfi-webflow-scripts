@@ -12,6 +12,41 @@ import { getLocaleTag } from "../utils/i18n.js";
 // Organization déclarée dans le head Webflow
 const ORG_REF = { "@id": "https://www.rockfi.fr/#organization" };
 
+// --- Articles (blog et landing) : FAQ écrite dans le texte de l'article ---
+// Un titre h2 « Questions fréquentes » / « Frequently asked questions », suivi
+// de questions en h3 et de leurs réponses (paragraphes, listes) jusqu'au h3 ou
+// h2 suivant. Ce format est repris par Google et les assistants IA.
+const FAQ_HEADING = /^(questions fréquentes|foire aux questions|faq|frequently asked questions)$/i;
+
+export function buildArticleFaqSchema(root) {
+  const heading = Array.from(root.querySelectorAll(".w-richtext h2")).find((h) =>
+    FAQ_HEADING.test(text(h)),
+  );
+  if (!heading) return [];
+
+  const questions = [];
+  let current = null;
+  for (let el = heading.nextElementSibling; el && el.tagName !== "H2"; el = el.nextElementSibling) {
+    if (el.tagName === "H3") {
+      current = { name: text(el), answer: [] };
+      questions.push(current);
+    } else if (current) {
+      const t = (text(el) || "").replace(/‍/g, "").trim();
+      if (t) current.answer.push(t);
+    }
+  }
+
+  const mainEntity = questions
+    .filter((q) => q.name && q.answer.length)
+    .map((q) => ({
+      "@type": "Question",
+      name: q.name,
+      acceptedAnswer: { "@type": "Answer", text: q.answer.join(" ") },
+    }));
+
+  return mainEntity.length ? [{ "@type": "FAQPage", mainEntity }] : [];
+}
+
 // --- Page À propos : dirigeants et équipe ---
 export function buildTeamSchema(root) {
   return Array.from(root.querySelectorAll(".collection-item-conseiller"))

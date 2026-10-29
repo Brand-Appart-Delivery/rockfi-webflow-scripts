@@ -34,6 +34,7 @@ import { initResourceFileLink } from "./resource-file-link.js";
 import { initLocalizeLinks } from "./localize-links.js";
 import { initLocaleLinksA11y } from "./locale-links-a11y.js";
 import { initListPaginationCanonical } from "./list-pagination-canonical.js";
+import { initSwiperTrackpad } from "./swiper-trackpad.js";
 
 const BUILD_VERSION = new Date().toISOString().slice(0, 10);
 console.log(
@@ -76,4 +77,5 @@ onReady(() => {
   initEmbedI18n();
   initEmailGuard();
   initResourceFileLink();
+  initSwiperTrackpad();
 });

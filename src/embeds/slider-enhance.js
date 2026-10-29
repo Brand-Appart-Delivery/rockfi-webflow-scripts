@@ -122,6 +122,43 @@ function initOneSlider(el) {
     }
   });
 
+  // Trackpad (geste horizontal à deux doigts) : le slider suit le doigt en
+  // continu comme un drag, puis se cale sur l'image la plus proche quand le
+  // geste (et son élan) s'arrête. Les gestes verticaux ne sont pas
+  // interceptés, la page défile normalement.
+  let wheelTimer;
+  let wheeling = false;
+  el.addEventListener(
+    "wheel",
+    (e) => {
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      e.preventDefault(); // évite aussi le « retour arrière » du navigateur
+
+      if (!wheeling) {
+        wheeling = true;
+        currentOffset = getLiveOffset(); // reprend une animation en cours
+      }
+      const dx = e.deltaMode === 1 ? e.deltaX * 16 : e.deltaX;
+      const maxOffset = getMaxOffset();
+      let proposed = currentOffset + dx;
+      if (proposed < 0) proposed = Math.max(-80, proposed / RESISTANCE);
+      else if (proposed > maxOffset) proposed = Math.min(maxOffset + 80, maxOffset + (proposed - maxOffset) / RESISTANCE);
+      setOffset(proposed, false);
+
+      clearTimeout(wheelTimer);
+      wheelTimer = setTimeout(() => {
+        wheeling = false;
+        // Image dont le bord gauche est le plus proche de la position actuelle
+        let nearest = 0;
+        items.forEach((item, i) => {
+          if (Math.abs(item.offsetLeft - currentOffset) < Math.abs(items[nearest].offsetLeft - currentOffset)) nearest = i;
+        });
+        goToIndex(nearest, true);
+      }, 140);
+    },
+    { passive: false },
+  );
+
   track.addEventListener("pointerdown", (e) => {
     const liveOffset = getLiveOffset();
     track.style.transition = "none";

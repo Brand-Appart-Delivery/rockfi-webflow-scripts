@@ -67,13 +67,21 @@ $bleed-mobile: 1.25rem; // = .padding-global en mobile
   }
 
   // ---- En-tête (logos), collé sous la nav au scroll ----
-  // Décalé en JS (translateY) : fonctionne même avec un overflow hidden sur
-  // la section, qui casse le position: sticky.
+  // Desktop / tablette : position sticky native, collée sous la nav fixe
+  // (--rt-compare-top, posé en JS). Suit le scroll sans aucun retard.
+  // Mobile : le tableau défile en horizontal (overflow-x), ce qui empêche
+  // sticky ; l'en-tête est alors décalé en JS (translateY).
   thead th,
   thead td {
-    position: relative;
+    position: sticky;
+    top: var(--rt-compare-top, 0px);
     z-index: 2;
-    transform: translateY(var(--rt-compare-shift, 0px));
+
+    @media screen and (max-width: $breakpoint-mobile) {
+      position: relative;
+      top: auto;
+      transform: translateY(var(--rt-compare-shift, 0px));
+    }
     padding-top: 1.25rem;
     padding-bottom: 1.25rem;
     border-bottom: 1px solid $color-border;
