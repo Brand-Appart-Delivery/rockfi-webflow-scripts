@@ -1,0 +1,33 @@
+// src/styles/steps.scss
+// États de la timeline "Steps Section" (src/steps-timeline.js).
+// Les styles de base (étape active) sont dans Webflow ; ici seulement l'état
+// "à venir", appliqué une fois le script prêt (.is-ready).
+
+.steps_progress {
+  transition: height 0.15s linear;
+}
+
+.steps_list.is-ready .steps_item:not(.is-active) {
+  .steps_dot {
+    border-color: rgba(36, 36, 36, 0.24);
+    background-color: #fff;
+  }
+
+  .steps_icon {
+    filter: brightness(0);
+    opacity: 0.4;
+  }
+
+  .steps_text {
+    opacity: 0.4;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .steps_progress,
+  .steps_dot,
+  .steps_icon,
+  .steps_text {
+    transition: none;
+  }
+}

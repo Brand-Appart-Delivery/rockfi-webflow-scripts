@@ -5,6 +5,7 @@ import { initParallax } from "./parallax.js";
 import { initHeroParallax } from "./hero-parallax.js";
 import { initBlurPlaceholders } from "./blur-placeholder.js";
 import { initTextProgress } from "./text-progress.js";
+import { initCalliReveal } from "./calli-reveal.js";
 
 export function initAnimations(root = document) {
   initBlurPlaceholders(root);
@@ -16,4 +17,5 @@ export function initAnimations(root = document) {
   initParallax(root);
   initHeroParallax(root);
   initTextProgress(root);
+  initCalliReveal(root);
 }

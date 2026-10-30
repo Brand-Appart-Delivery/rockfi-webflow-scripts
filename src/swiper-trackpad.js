@@ -57,7 +57,8 @@ function attach(swiper) {
   );
 }
 
-function enable(el) {
+// Exporté pour les Swiper créés par nos propres scripts (sans classe .swiper)
+export function enable(el) {
   const swiper = el.swiper;
   if (!swiper || swiper.destroyed) return;
   if (done.has(swiper)) return;

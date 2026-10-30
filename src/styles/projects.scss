@@ -1,0 +1,29 @@
+// src/styles/projects.scss
+// Carrousel "Projects Section" (src/projects-carousel.js).
+// La mise en page des cartes est dans Webflow ; ici seulement ce que Swiper
+// et les onglets demandent.
+
+.projects_track {
+  box-sizing: content-box;
+  transition-property: transform;
+  will-change: transform;
+}
+
+.projects_card {
+  user-select: none;
+}
+
+.projects_tab {
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+
+  &.is-active,
+  &:hover {
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: 1px solid currentColor;
+    outline-offset: 4px;
+  }
+}

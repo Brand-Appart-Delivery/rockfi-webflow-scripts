@@ -35,6 +35,8 @@ import { initLocalizeLinks } from "./localize-links.js";
 import { initLocaleLinksA11y } from "./locale-links-a11y.js";
 import { initListPaginationCanonical } from "./list-pagination-canonical.js";
 import { initSwiperTrackpad } from "./swiper-trackpad.js";
+import { initStepsTimeline } from "./steps-timeline.js";
+import { initProjectsCarousel } from "./projects-carousel.js";
 
 const BUILD_VERSION = new Date().toISOString().slice(0, 10);
 console.log(
@@ -78,4 +80,6 @@ onReady(() => {
   initEmailGuard();
   initResourceFileLink();
   initSwiperTrackpad();
+  initStepsTimeline();
+  initProjectsCarousel();
 });
