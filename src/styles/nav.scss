@@ -99,6 +99,13 @@ $nav-dark: '[data-wf--navbar--variant$="-dark"]';
   }
 }
 
+// ---- Composant "Navbar Landing" (.nav_fixed.is-landing) : pas de fond blanc au scroll ----
+// Nav minimale des landings (logo + CTA) : elle reste transparente une fois le
+// hero passé. Le logo passe quand même en noir (règle nav-solid au-dessus).
+.nav_fixed.is-landing.is-past-hero .navbar_component {
+  background-color: transparent;
+}
+
 // ---- Variante dark : fond noir pur, texte blanc ----
 // Mêmes états que la nav pleine, spécificité supérieure : écrase le blanc sans !important.
 // (.navbar_menu volontairement retiré : le fond noir vient de .navbar_component
