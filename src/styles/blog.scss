@@ -307,7 +307,7 @@ $breakpoint-tablet: 991px;
     justify-content: center;
     align-items: center;
     align-self: stretch;
-    gap: 48px;
+    gap: 24px; // espace entre les blocs et la ligne du bas (était 48px)
     padding: 32px;
     border-radius: 6px;
     background: $color-bg-beige;
@@ -321,7 +321,7 @@ $breakpoint-tablet: 991px;
       margin: 0 0 0.5rem;
       color: $color-black;
       font-family: $font-sans;
-      font-size: 18px;
+      font-size: 0.9375rem; // comme les paragraphes de l'article
       font-weight: 600;
       line-height: 1.5;
     }
@@ -329,9 +329,9 @@ $breakpoint-tablet: 991px;
     &-line {
       @extend %webflow-gutter-reset;
       margin: 0 0 4px;
-      color: $color-black;
+      color: $color-black-70;
       font-family: $font-sans;
-      font-size: 18px;
+      font-size: 0.9375rem; // comme les paragraphes de l'article
       font-weight: 400;
       line-height: 1.5;
 
@@ -347,7 +347,7 @@ $breakpoint-tablet: 991px;
       align-self: stretch;
       gap: 8px;
       width: 100%;
-      padding: 24px 0 8px;
+      padding: 16px 0 0;
       border-top: 1px solid $color-border;
     }
 
@@ -356,7 +356,7 @@ $breakpoint-tablet: 991px;
       margin: 0;
       color: $color-black;
       font-family: $font-sans;
-      font-size: 18px;
+      font-size: 0.9375rem; // comme les paragraphes de l'article
       font-weight: 600;
       line-height: 1.5;
     }
@@ -837,5 +837,138 @@ $breakpoint-tablet: 991px;
 
   .toc_link {
     padding: 10px 16px;
+  }
+}
+// ---------------------------------------------------------------------------
+// 7. LARGEUR DE LECTURE DES ARTICLES (ordinateur uniquement)
+// ---------------------------------------------------------------------------
+// Demande client (nov. 2026) : le texte s'élargissait avec l'écran (~790 px et
+// ~110 caractères par ligne à 1500 px). Les textes sont limités à 680 px, en
+// gardant leur retrait à gauche. Images, CTA et calculs : alignés sur le
+// texte, 32 px de plus de chaque côté. Slider : slides au même format, la
+// suivante visible à droite. Vidéos et tableaux : jusqu'au bord droit.
+// Mobile / tablette : inchangé.
+
+// Retrait gauche des textes (valeur de Webflow sur les p / h2… du rich text)
+$article-indent: clamp(1rem, 25.9336vw - 15.0529rem, 7.25rem);
+$article-measure: 680px;
+// Débord des blocs encadrés (CTA, calculs) de chaque côté du texte, sans
+// jamais dépasser le retrait gauche (petits écrans d'ordinateur)
+$article-bleed: min(2rem, #{$article-indent});
+
+@media screen and (min-width: 992px) {
+  // La colonne n'a plus de marge à droite : les médias vont jusqu'au bord
+  .content_blog:has(.rich-text_blog) {
+    padding-right: 0;
+  }
+
+  // La section de l'article rogne ce qui dépasse de l'écran (slides du
+  // slider) : pas de scroll horizontal
+  .section_blog-content {
+    overflow-x: clip;
+  }
+
+  // Bloc auteur / date / « Copier le lien » : même largeur que le texte
+  .content_blog .info-article_blog {
+    box-sizing: border-box;
+    padding-right: 0;
+    max-width: calc(#{$article-measure} + #{$article-indent});
+  }
+
+  .rich-text_blog,
+  .rich-text_intro {
+    // Titres et paragraphes : retrait gauche + 680 px de texte
+    > :is(p, h2, h3, h4, h5, h6) {
+      box-sizing: border-box;
+      padding-right: 0;
+      max-width: calc(#{$article-measure} + #{$article-indent});
+    }
+
+    // Listes et citations (retrait en marge, pas en padding)
+    > :is(ul, ol, blockquote) {
+      margin-right: 0;
+      max-width: $article-measure;
+    }
+  }
+
+  .rich-text_blog {
+    // Modules texte (citation, liste, bouton) : même largeur que le texte
+    .blog-embed_wrapper {
+      box-sizing: border-box;
+      padding-right: 0;
+      max-width: calc(#{$article-measure} + #{$article-indent});
+    }
+
+    // Bloc de calcul (« Aujourd'hui / L'objectif… ») : dépasse un peu des
+    // deux côtés du texte, comme le CTA
+    .blog-embed_wrapper .rt-calc {
+      margin-left: calc(-1 * #{$article-bleed});
+      margin-right: calc(-1 * #{$article-bleed});
+    }
+
+    // Slider : commence au même bord gauche que les images et va jusqu'au
+    // bord droit de la colonne (la slide suivante reste visible à droite).
+    // Chaque slide a le format des images (texte + débord des deux côtés).
+    // Rogné à gauche seulement : la slide précédente ne déborde pas sur la
+    // marge, la suivante va jusqu'au bord de l'écran.
+    .rt-slider {
+      margin-left: calc(#{$article-indent} - #{$article-bleed});
+      clip-path: inset(-100vh -100vw -100vh 0);
+    }
+
+
+    .rt-slider-item {
+      flex-basis: calc(#{$article-measure} + 2 * #{$article-bleed});
+      width: calc(#{$article-measure} + 2 * #{$article-bleed});
+      max-width: 100%;
+    }
+
+    // Flèches centrées sous la slide affichée (pas sous toute la zone)
+    .rt-slider-controls {
+      max-width: calc(#{$article-measure} + 2 * #{$article-bleed});
+    }
+
+    // Tableaux : jusqu'au bord droit
+    .blog-embed_wrapper.rt-table-wrap {
+      max-width: none;
+    }
+
+    // Bloc CTA (« Nos clients ne cherchent pas… ») : centré sur le texte et
+    // dépasse un peu des deux côtés. Le dessin « R » à droite est réduit pour
+    // laisser la place au titre (Webflow réserve 26rem à droite, prévu pour
+    // une colonne large).
+    .cta_blog {
+      box-sizing: border-box;
+      max-width: calc(#{$article-measure} + 2 * #{$article-bleed});
+      margin-left: calc(#{$article-indent} - #{$article-bleed});
+      margin-right: 0;
+      padding-right: 13rem;
+
+      .icon-embed-cta {
+        width: 11rem;
+      }
+    }
+
+    [data-rt-embed-type],
+    .rf-wrap {
+      max-width: none;
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    // Images : comme le CTA et les calculs, alignées sur le texte et un peu
+    // plus larges des deux côtés (Webflow les limitait à 60 %, centrées)
+    figure.w-richtext-figure-type-image {
+      display: block;
+      box-sizing: border-box;
+      width: auto;
+      max-width: calc(#{$article-measure} + 2 * #{$article-bleed});
+      margin-left: calc(#{$article-indent} - #{$article-bleed});
+      margin-right: 0;
+
+      > div {
+        display: block;
+      }
+    }
   }
 }
