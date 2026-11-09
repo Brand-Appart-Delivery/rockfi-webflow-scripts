@@ -39,8 +39,6 @@ const PIN_STYLES = ["position", "left", "right", "bottom", "top", "width", "zInd
 
 // Rebond max couvert (px) : le média dépasse d'autant sous le hero (rogné).
 const HERO_EXTRA = 160;
-// En remontant, distance du haut (px) à partir de laquelle le média est figé
-const HERO_ANTICIPATE = 400;
 const HERO_SELECTOR = "[data-nav-hero]";
 const HERO_MEDIA_SELECTOR = "[data-overscroll-stretch], .img_wrapper";
 
@@ -61,68 +59,55 @@ function initHeroFreeze() {
   media.style.bottom = `-${HERO_EXTRA}px`;
 
   let frozen = false;
-  let lastY = window.scrollY;
-  let box = null; // position du média au repos, en coordonnées de page
+  let ticking = false;
 
-  // Position "normale" du média (mesurée quand il n'est pas figé)
-  function measure() {
-    const r = media.getBoundingClientRect();
-    box = { top: r.top + window.scrollY, left: r.left, width: r.width, height: r.height };
+  function setFrozen(on) {
+    if (on === frozen) return;
+    if (on) {
+      const r = media.getBoundingClientRect();
+      Object.assign(media.style, {
+        position: "fixed",
+        top: `${r.top}px`,
+        left: `${r.left}px`,
+        width: `${r.width}px`,
+        height: `${r.height}px`,
+        bottom: "auto",
+      });
+    } else {
+      Object.assign(media.style, {
+        position: "",
+        top: "",
+        left: "",
+        width: "",
+        height: "",
+        bottom: `-${HERO_EXTRA}px`,
+      });
+    }
+    frozen = on;
   }
 
-  function freeze(y) {
-    // Exactement là où il serait sans le figer : aucun saut, quel que soit y
-    media.style.top = `${box.top - y}px`;
-    if (frozen) return;
-    Object.assign(media.style, {
-      position: "fixed",
-      left: `${box.left}px`,
-      width: `${box.width}px`,
-      height: `${box.height}px`,
-      bottom: "auto",
-    });
-    frozen = true;
+  function update() {
+    ticking = false;
+    setFrozen(window.scrollY <= 0);
   }
 
-  function release() {
-    if (!frozen) return;
-    Object.assign(media.style, {
-      position: "",
-      top: "",
-      left: "",
-      width: "",
-      height: "",
-      bottom: `-${HERO_EXTRA}px`,
-    });
-    frozen = false;
-  }
-
-  // Avec l'inertie, la page arrive à 0 déjà lancée et rebondit aussitôt :
-  // figer à 0 serait trop tard d'une image. On fige donc dès qu'on remonte
-  // près du haut, en suivant le scroll ; arrivé à 0, le média est déjà fixe.
-  // En redescendant, il reprend aussitôt sa place normale.
-  // Synchrone (pas de requestAnimationFrame) pour ne perdre aucune image.
   function onScroll() {
-    const y = window.scrollY;
-    const goingUp = y < lastY;
-    lastY = y;
-    if (y <= 0 || (goingUp && y < HERO_ANTICIPATE)) freeze(Math.max(0, y));
-    else release();
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
   }
 
-  measure();
   window.addEventListener("scroll", onScroll, { passive: true });
-  // Au resize : on relâche, on remesure, puis on refige si besoin
+  // Au resize : on relâche puis on refige aux nouvelles dimensions
   window.addEventListener(
     "resize",
     () => {
-      release();
-      measure();
+      setFrozen(false);
       onScroll();
     },
     { passive: true },
   );
-  onScroll();
+  update();
 }
 
 // ------------------------------------------------------------- bas : footer
