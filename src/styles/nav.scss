@@ -307,9 +307,13 @@ $nav-gutter: 1.5rem;
     }
 
     // Menu déroulant ouvert : son panneau est dessiné dans la zone masquée,
-    // on retire le fondu pour ne pas le couper.
+    // on retire le fondu pour ne pas le couper. On laisse aussi déborder :
+    // overflow-x: auto rend la zone coupante en hauteur (45 px), et Safari 27
+    // y coupait le panneau du menu (seules les images, sur leur propre calque,
+    // restaient visibles). Chrome ne le coupait pas.
     &:has(.w--open) {
       mask-image: none !important;
+      overflow: visible;
     }
   }
 }
