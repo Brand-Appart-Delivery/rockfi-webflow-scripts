@@ -1,3 +1,5 @@
 node_modules
 *.map
 src/assets
+# Sauvegardes locales (contenu CMS, textes) : jamais dans le dépôt public
+backups/
