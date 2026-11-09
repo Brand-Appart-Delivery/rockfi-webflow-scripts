@@ -30,6 +30,13 @@
   overflow: hidden;
 }
 
+// Mega menu : pas de calque séparé pour les images. Avec will-change, Safari
+// ne peignait plus le panneau du menu (fond, liens) et n'affichait que les
+// images des cartes, mal placées. Le zoom au survol reste fluide sans.
+.nav_fixed [data-hover-zoom-img] {
+  will-change: auto;
+}
+
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   [data-hover-zoom]:hover [data-hover-zoom-img] {
     transform: scale(var(--zoom-scale, 1.025));
@@ -162,4 +169,12 @@ form[fs-list-element="filters"] > div:has(input[name="cf-turnstile-response"]) {
 }
 .form_input.is-email-error {
   border-color: #c62828;
+}
+
+// ---- Page Tech, section « Notre infrastructure » ----
+// Les cartes ont un ratio 9/10 : sur grand écran elles devenaient très hautes
+// (≈ 390 px à 1512 px). Hauteur plafonnée ; le contenu (icône, titre,
+// 2 lignes) tient largement. Ciblé sur la variante de grille de cette section.
+.heading-grid.w-variant-8bf9ef82-a64a-dc36-dfff-85357ccc4fdd .grid-list4_item {
+  max-height: 18rem;
 }

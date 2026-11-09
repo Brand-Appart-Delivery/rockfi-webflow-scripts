@@ -849,6 +849,13 @@ $breakpoint-tablet: 991px;
 // suivante visible à droite. Vidéos et tableaux : jusqu'au bord droit.
 // Mobile / tablette : inchangé.
 
+// « Copier le lien de l'article » : l'icône SVG, affichée en ligne, se
+// posait sur la ligne de base (1 px trop bas). En bloc, elle est centrée
+// exactement sur le texte. (Hors media query : tous les écrans.)
+.link-page .icon-1x1-small > svg {
+  display: block;
+}
+
 // Retrait gauche des textes (valeur de Webflow sur les p / h2… du rich text)
 $article-indent: clamp(1rem, 25.9336vw - 15.0529rem, 7.25rem);
 $article-measure: 680px;
