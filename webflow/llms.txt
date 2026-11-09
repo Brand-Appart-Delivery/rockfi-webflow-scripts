@@ -47,7 +47,8 @@ Site disponible en français (https://www.rockfi.fr) et en anglais (https://www.
 - [RockFi Intelligence](https://www.rockfi.fr/intelligence) : la donnée et l'IA au service du conseil
 - [Nos conseillers](https://www.rockfi.fr/nos-conseillers) : profils et villes des conseillers
 - [Prendre rendez-vous](https://www.rockfi.fr/contact-conseiller) : premier échange de 30 minutes
-- [Mentions légales](https://www.rockfi.fr/mentions-legales) : informations juridiques et réglementaires, réclamations, médiation
+- [Mentions légales](https://www.rockfi.fr/mentions-legales) : informations juridiques et réglementaires
+- [Réclamations](https://www.rockfi.fr/reclamations) : canaux de réclamation, délais de traitement, autorités de contrôle, médiation
 
 ## Comparatifs
 

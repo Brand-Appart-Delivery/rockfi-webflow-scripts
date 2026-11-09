@@ -37,6 +37,7 @@ import { initListPaginationCanonical } from "./list-pagination-canonical.js";
 import { initSwiperTrackpad } from "./swiper-trackpad.js";
 import { initStepsTimeline } from "./steps-timeline.js";
 import { initProjectsCarousel } from "./projects-carousel.js";
+import { initOverscrollEdges } from "./overscroll-edges.js";
 
 const BUILD_VERSION = new Date().toISOString().slice(0, 10);
 console.log(
@@ -82,4 +83,5 @@ onReady(() => {
   initSwiperTrackpad();
   initStepsTimeline();
   initProjectsCarousel();
+  initOverscrollEdges();
 });
