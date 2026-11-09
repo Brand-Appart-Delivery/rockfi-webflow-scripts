@@ -317,3 +317,16 @@ $nav-gutter: 1.5rem;
     }
   }
 }
+
+// Cartes du méga menu : le cadre n'a qu'une hauteur (20rem) et un ratio,
+// sa largeur vient du ratio. Safari prenait en plus la taille réelle de
+// l'image pour calculer la largeur de la carte : cartes étirées, colonne de
+// liens écrasée. L'image en absolu ne compte plus dans ce calcul.
+.card-nav_wrapper {
+  position: relative;
+
+  > img {
+    position: absolute;
+    inset: 0;
+  }
+}
