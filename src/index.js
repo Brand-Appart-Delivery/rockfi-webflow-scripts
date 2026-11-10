@@ -16,6 +16,7 @@ import { initDotArrow } from "./animate/dot-arrow.js";
 import { initParallax } from "./animate/parallax.js";
 import { initHeroParallax } from "./animate/hero-parallax.js";
 import { initListLenisSync } from "./list-lenis-sync.js";
+import { initFilterEmptyOptions } from "./filter-empty-options.js";
 import { initFocusStories } from "./focus-stories.js";
 import { initVideoSection } from "./video-section.js";
 import { initSwitch } from "./switch.js";
@@ -65,6 +66,7 @@ onReady(() => {
   initParallax();
   initHeroParallax();
   initListLenisSync();
+  initFilterEmptyOptions();
   initFocusStories();
   initVideoSection();
   initDotArrow();
