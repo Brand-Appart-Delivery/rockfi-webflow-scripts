@@ -121,6 +121,10 @@ export function initOverscrollEdges() {
   const root = document.documentElement;
   const pin = footer.querySelector(FOOTER_PIN_SELECTOR);
   const footerColor = bgOf(footer);
+  // Haut : couleur du hero principal (beige), pour que le rebond en haut de
+  // page ne laisse pas apparaître une bande blanche au-dessus du hero.
+  const topHero = document.querySelector(".section_main_hero");
+  const topColor = topHero ? bgOf(topHero) : null;
   let pinned = false;
   let ticking = false;
 
@@ -147,8 +151,10 @@ export function initOverscrollEdges() {
     const maxScroll = Math.max(0, root.scrollHeight - window.innerHeight);
     const y = window.scrollY;
 
-    // Fond de <html> : couleur du footer dans la moitié basse, sinon défaut
-    const color = footerColor && y >= maxScroll / 2 ? footerColor : "";
+    // Fond de <html> : couleur du footer dans la moitié basse,
+    // couleur du hero principal dans la moitié haute, sinon défaut
+    const color =
+      footerColor && y >= maxScroll / 2 ? footerColor : y < maxScroll / 2 && topColor ? topColor : "";
     if (root.style.backgroundColor !== color) root.style.backgroundColor = color;
 
     setPinned(maxScroll > 0 && y >= maxScroll - 1);

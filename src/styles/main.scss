@@ -10,6 +10,7 @@
 @use "compare";
 @use "steps";
 @use "projects";
+@use "hero-main";
 
 // Le body forme son propre calque : quand overscroll-edges colore le fond de
 // <html>, le fond blanc du body ne doit pas recouvrir les éléments en

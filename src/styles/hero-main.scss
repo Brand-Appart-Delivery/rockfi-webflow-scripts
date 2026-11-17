@@ -1,0 +1,29 @@
+// Hero de la home : les images débordent en bas sur la section suivante
+// (voir OVERFLOW_ENABLED dans src/animate/hero-bg-parallax.js).
+// - plus d'air au-dessus de la section qui suit le hero
+// - le beige du hero se fond en blanc en haut de cette section, au lieu
+//   d'une coupure nette
+
+$hero-next-padding: 24rem;  // padding-top de la section (Webflow : 6rem)
+$hero-next-fade: 16rem;     // hauteur du dégradé beige → blanc
+
+.section_bio.is-main {
+  padding-top: $hero-next-padding;
+  background-image: linear-gradient(
+    to bottom,
+    var(--background-color--background-tertiary, #f9f7f3) 0,
+    #fff $hero-next-fade
+  );
+}
+
+// Le padding-top de .main-wrapper (2,7rem, place du bandeau) laisse voir le
+// fond blanc du body entre la zone de rebond (beige) et le hero : on le peint
+// en beige quand la page commence par le hero principal.
+.main-wrapper:has(> .section_main_hero) {
+  background-image: linear-gradient(
+    var(--background-color--background-tertiary, #f9f7f3),
+    var(--background-color--background-tertiary, #f9f7f3)
+  );
+  background-size: 100% 20rem;
+  background-repeat: no-repeat;
+}

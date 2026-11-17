@@ -52,6 +52,12 @@ const MOUSE_SMOOTH = 0.9;
 // juste assez pour qu'elles soient entières à REVEAL_AT du scroll du hero.
 // Détection automatique, recalculée au resize. false = comportement d'origine.
 const REVEAL_ENABLED = false;
+
+// Le hero ne coupe plus les images en bas, elles débordent sur la section
+// suivante (positions inchangées). Coupe toujours sur les côtés (le fond fait
+// 96rem de large). Styles associés : src/styles/hero-main.scss.
+// false = comportement d'origine (images coupées en bas).
+const OVERFLOW_ENABLED = true;
 const REVEAL_AT = 0.5;    // fraction du scroll du hero (0.5 = à mi-parcours)
 const REVEAL_MARGIN = 32; // espace (px) laissé sous l'image une fois entière
 
@@ -131,6 +137,15 @@ export function initHeroBgParallax(root = document) {
 
   const hero = root.querySelector(".section_main_hero");
   if (!hero) return showAll();
+
+  if (OVERFLOW_ENABLED) {
+    // Coupe sur les côtés seulement (overflow-x: clip, pas de scroll
+    // horizontal). En haut, les images passent sous le bandeau et la nav
+    // (z-index plus élevé) ; en bas, elles débordent sur la section suivante.
+    hero.style.overflowX = "clip";
+    hero.style.overflowY = "visible";
+    hero.style.zIndex = "1";
+  }
 
   const all = Array.from(hero.querySelectorAll(".hero-bg_image")).filter((el) => el.querySelector("img"));
   if (!all.length) return showAll();
