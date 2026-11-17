@@ -128,8 +128,10 @@ $hero-ratio-h: 40;
 }
 
 // ---- Cartes personas ----
+// Pas de position ici : Webflow place la bannière en absolu (photo plein
+// cadre sous le texte). Absolu ou relatif, elle reste le repère du lecteur
+// vidéo (src/video-section.js).
 .personas_card-banner {
-  position: relative;
   overflow: hidden;
 }
 
