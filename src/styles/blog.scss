@@ -863,6 +863,26 @@ $article-measure: 680px;
 // jamais dépasser le retrait gauche (petits écrans d'ordinateur)
 $article-bleed: min(2rem, #{$article-indent});
 
+// Bouton Webflow (composant Button) posé directement dans le texte de
+// l'article : il est en display flex, donc pleine largeur par défaut.
+// Il prend la largeur de son contenu, comme les boutons [button].
+.rich-text_blog,
+.rich-text_intro {
+  > .button {
+    width: fit-content;
+  }
+}
+
+@media screen and (min-width: 992px) {
+  // Même retrait gauche que les paragraphes
+  .rich-text_blog,
+  .rich-text_intro {
+    > .button {
+      margin-left: $article-indent;
+    }
+  }
+}
+
 @media screen and (min-width: 992px) {
   // La colonne n'a plus de marge à droite : les médias vont jusqu'au bord
   .content_blog:has(.rich-text_blog) {

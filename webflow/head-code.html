@@ -1,0 +1,376 @@
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+
+<style>
+  [data-inview]:not(.--visible):not([data-inview='image-reveal']),
+  [data-text-reveal]:not(.--visible) {
+    opacity: 0;
+  }
+
+  @keyframes reveal-fallback {
+    to {
+      opacity: 1;
+    }
+  }
+  [data-inview]:not(.--visible),
+  [data-text-reveal]:not(.--visible) {
+    animation: reveal-fallback 0s 3s forwards;
+  }
+
+  *:has(> [data-hero-parallax]) {
+    position: relative;
+    overflow: hidden;
+  }
+
+  [data-hero-parallax] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    will-change: transform;
+  }
+</style>
+
+<script>
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+
+  window.ROCKFI_IS_EN = location.pathname === '/en' || location.pathname.indexOf('/en/') === 0;
+</script>
+
+<script>
+  (function () {
+    var ORIGIN = 'https://www.rockfi.fr';
+    var isEn = window.ROCKFI_IS_EN;
+    var path = location.pathname.replace(/\/+$/, '');
+    var pageUrl = ORIGIN + (path || '/');
+
+    function addMeta(key, value) {
+      var m = document.createElement('meta');
+      m.setAttribute('property', key);
+      m.setAttribute('content', value);
+      document.head.appendChild(m);
+    }
+
+    addMeta('og:url', pageUrl);
+    addMeta('og:locale', isEn ? 'en_GB' : 'fr_FR');
+    addMeta('og:locale:alternate', isEn ? 'fr_FR' : 'en_GB');
+    addMeta('og:site_name', 'RockFi');
+  })();
+</script>
+
+<!-- Données structurées schema.org : l'entreprise (Organization) et le site (WebSite).
+     Les pages CMS (articles, conseillers, villes) y font référence via "@id". -->
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": [
+          "Organization",
+          "FinancialService"
+        ],
+        "@id": "https://www.rockfi.fr/#organization",
+        "name": "RockFi",
+        "legalName": "RockFi SAS",
+        "url": "https://www.rockfi.fr",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cdn.prod.website-files.com/6a6cc391f29a3bfcb80711a0/6ab3d4b2dbdbc6a5f1d16253_LogoSEO.png"
+        },
+        "image": "https://cdn.prod.website-files.com/6a6cc391f29a3bfcb80711a0/6ab3d4b2dbdbc6a5f1d16253_LogoSEO.png",
+        "email": "contact@rockfi.fr",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "7 boulevard Haussmann",
+          "postalCode": "75009",
+          "addressLocality": "Paris",
+          "addressCountry": "FR"
+        },
+        "areaServed": {
+          "@type": "Country",
+          "name": "France"
+        },
+        "identifier": [
+          {
+            "@type": "PropertyValue",
+            "propertyID": "ORIAS",
+            "value": "23004556",
+            "url": "https://www.orias.fr/"
+          },
+          {
+            "@type": "PropertyValue",
+            "propertyID": "Anacofi",
+            "value": "E010552",
+            "url": "https://www.anacofi.asso.fr/"
+          },
+          {
+            "@type": "PropertyValue",
+            "propertyID": "RCS Paris",
+            "value": "953 123 593"
+          }
+        ],
+        "memberOf": {
+          "@type": "Organization",
+          "name": "ANACOFI",
+          "url": "https://www.anacofi.asso.fr/"
+        },
+        "founder": [
+          {
+            "@type": "Person",
+            "name": "Pierre Marin",
+            "jobTitle": "Co-fondateur & Directeur Général",
+            "sameAs": "https://www.linkedin.com/in/pierre-marin-rockfi/"
+          },
+          {
+            "@type": "Person",
+            "name": "Marie Bedu",
+            "jobTitle": "Co-fondatrice & COO",
+            "sameAs": "https://www.linkedin.com/in/mariebedu/"
+          },
+          {
+            "@type": "Person",
+            "name": "Maxime Durand",
+            "jobTitle": "Co-fondateur & CTO",
+            "sameAs": "https://www.linkedin.com/in/durandmaxime/"
+          }
+        ],
+        "sameAs": [
+          "https://www.linkedin.com/company/rockfi",
+          "https://www.youtube.com/@RockFiConseil"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://www.rockfi.fr/#website",
+        "url": "https://www.rockfi.fr",
+        "name": "RockFi",
+        "publisher": {
+          "@id": "https://www.rockfi.fr/#organization"
+        }
+      }
+    ]
+  }
+</script>
+
+<!-- Axeptio + Consent Mode v2 (doit rester AVANT GTM) -->
+<script>
+  window.axeptioSettings = {
+    clientId: '68e3bb5901b337c70d48fb46',
+    cookiesVersion: window.ROCKFI_IS_EN ? 'en-06-10-2025' : 'fr-06-10-2025',
+    userCookiesDomain: 'rockfi.fr',
+  };
+
+  (function (d, s) {
+    var t = d.getElementsByTagName(s)[0],
+      e = d.createElement(s);
+    e.async = true;
+    e.src = '//static.axept.io/sdk.js';
+    t.parentNode.insertBefore(e, t);
+  })(document, 'script');
+
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    analytics_storage: 'denied',
+    functionality_storage: 'denied',
+    personalization_storage: 'denied',
+    security_storage: 'granted',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    wait_for_update: 500,
+  });
+
+  window._axcb = window._axcb || [];
+  window._axcb.push(function (axeptio) {
+    axeptio.on('cookies:complete', function (choices) {
+      var g = choices.$$googleConsentMode || {};
+      gtag('consent', 'update', {
+        analytics_storage: g.analytics_storage || (choices.google_analytics ? 'granted' : 'denied'),
+        ad_storage: g.ad_storage || 'denied',
+        ad_user_data: g.ad_user_data || 'denied',
+        ad_personalization: g.ad_personalization || 'denied',
+      });
+    });
+  });
+</script>
+
+<!-- Provenance des leads RockFi (doit rester AVANT le formulaire Fillout) -->
+<script>
+  (function () {
+    // Provenance des leads : calcule le canal de chaque visite, garde le dernier canal non direct
+    // (et le premier canal), 90 jours, sur tout rockfi.fr. Sur les pages à formulaire Fillout,
+    // ajoute ces valeurs à l'URL sous des noms préfixés rf_ : Fillout les reprend dans ses champs cachés
+    // (data-fillout-inherit-parameters) sans que GA4 ni Google Ads ne relisent d'anciens UTM ou gclid.
+    if (window.__rfProvenance) return; // déjà exécuté (head Webflow puis GTM)
+    window.__rfProvenance = true;
+    var FORM_PAGES = /^\/(en\/)?(contact-conseiller|devenir-partner|contact-team)\/?$/;
+    var isForm = location.hostname === 'lp.rockfi.fr' || FORM_PAGES.test(location.pathname);
+    var KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid'];
+    var NAME = 'rf_provenance',
+      DOMAIN = '.rockfi.fr',
+      MAX_AGE = 60 * 60 * 24 * 90;
+
+    function q(n) {
+      var m = new RegExp('[?&]' + n + '=([^&#]*)').exec(location.search);
+      if (!m) return '';
+      try {
+        return decodeURIComponent(m[1].replace(/\+/g, ' '));
+      } catch (e) {
+        return m[1];
+      }
+    }
+    function host(u) {
+      try {
+        return new URL(u).hostname.replace(/^www\./, '');
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function canal() {
+      var src = q('utm_source').toLowerCase(),
+        med = q('utm_medium').toLowerCase();
+      var paid = /(^|[^a-z])(cpc|ppc|paid|ads?|display|sea)([^a-z]|$)/.test(med);
+      if (q('gclid') || q('gbraid') || q('wbraid')) return 'Google Ads';
+      if ((/linkedin/.test(src) && paid) || q('li_fat_id')) return 'LinkedIn Ads';
+      if (/facebook|instagram|meta|^fb$|^ig$/.test(src) && paid) return 'Meta Ads';
+      if (/google|bing/.test(src) && paid) return 'Google Ads';
+      if (/e-?mail|newsletter/.test(med)) return 'Email';
+      if (src) return src + (med ? ' / ' + med : '');
+      if (q('fbclid')) return 'Réseaux sociaux';
+      var r = host(document.referrer);
+      if (!r || /(^|\.)rockfi\.fr$/.test(r)) return ''; // direct ou navigation interne
+      if (/chatgpt|openai|perplexity|gemini\.google|copilot|claude\.ai|mistral/.test(r)) return 'Assistants IA';
+      if (/^mail\.|outlook\.|^webmail/.test(r)) return 'Email';
+      if (/(^|\.)(google\.|bing\.|qwant\.|duckduckgo\.|ecosia\.|yahoo\.|search\.brave)/.test(r)) return 'SEO';
+      if (/linkedin|facebook|instagram|youtube|^t\.co$|^x\.com$|twitter/.test(r)) return 'Réseaux sociaux';
+      return 'Site référent : ' + r;
+    }
+
+    function read() {
+      try {
+        var m = document.cookie.match(new RegExp('(?:^|;\\s*)' + NAME + '=([^;]+)'));
+        return m ? JSON.parse(decodeURIComponent(m[1])) : {};
+      } catch (e) {
+        return {};
+      }
+    }
+    function write(v) {
+      document.cookie = NAME + '=' + encodeURIComponent(JSON.stringify(v)) + '; path=/; domain=' + DOMAIN + '; max-age=' + MAX_AGE + '; SameSite=Lax; Secure';
+    }
+
+    var p = read(),
+      c = canal();
+    if (c) {
+      // nouvelle visite non directe : elle devient le dernier canal
+      var t = { canal: c, page_entree: location.hostname + location.pathname };
+      KEYS.forEach(function (k) {
+        var v = q(k);
+        if (v) t[k] = v;
+      });
+      t.canal_premier = p.canal_premier || c;
+      p = t;
+      try {
+        write(p);
+      } catch (e) {}
+    } else if (!p.canal) {
+      p = { canal: 'Direct', canal_premier: 'Direct', page_entree: location.hostname + location.pathname };
+      try {
+        write(p);
+      } catch (e) {}
+    }
+
+    if (!isForm) return;
+    try {
+      var url = new URL(location.href),
+        touched = false;
+      KEYS.concat(['canal', 'canal_premier', 'page_entree']).forEach(function (k) {
+        var name = 'rf_' + k;
+        if (p[k] && url.searchParams.get(name) !== p[k]) {
+          url.searchParams.set(name, p[k]);
+          touched = true;
+        }
+      });
+      if (touched) history.replaceState(history.state, '', url.toString());
+    } catch (e) {}
+  })();
+</script>
+
+<!-- Google Tag Manager -->
+<script>
+  (function (w, d, s, l, i) {
+    w[l] = w[l] || [];
+    w[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+    var f = d.getElementsByTagName(s)[0],
+      j = d.createElement(s),
+      dl = l != 'dataLayer' ? '&l=' + l : '';
+    j.async = true;
+    j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+    f.parentNode.insertBefore(j, f);
+  })(window, document, 'script', 'dataLayer', 'GTM-T8BG6JMV');
+</script>
+
+<!-- CSS global
+     Production : main.css depuis jsDelivr.
+     Staging (.webflow.io, localhost) : main.css depuis le serveur de dev (tunnel ou localhost:3000).
+     Seulement si c'est le dev de CE projet (nom du package.json) : sinon code de production. -->
+<script>
+  (function () {
+    const PROJECT = 'rockfi'; // « name » du package.json
+    const DEV_ORIGINS = ['https://dev.michelaxel.fr', 'http://localhost:3000'];
+    const PROD_URL = 'https://cdn.jsdelivr.net/gh/Brand-Appart-Delivery/rockfi-webflow-scripts@main/main.css?v=v0.0.31';
+
+    function loadCSS(url) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = url;
+      document.head.appendChild(link);
+    }
+
+    function initLiveReload(origin) {
+      try {
+        const es = new EventSource(origin + '/esbuild');
+        es.addEventListener('change', () => location.reload());
+      } catch (e) {}
+    }
+
+    async function findDevOrigin() {
+      for (const origin of DEV_ORIGINS) {
+        try {
+          // Le serveur de dev doit être celui de CE projet (le tunnel sert
+          // aussi les autres clients) : on compare le nom de son package.json
+          const r = await fetch(origin + '/package.json', { cache: 'no-store' });
+          const pkg = r.ok ? await r.json() : null;
+          if (pkg && pkg.name === PROJECT) return origin;
+          console.warn('[RockFi] Serveur de dev ignoré (' + origin + ') : projet ' + (pkg && pkg.name));
+        } catch (e) {}
+      }
+      return null;
+    }
+
+    async function load() {
+      const host = window.location.hostname;
+      const isDevOrStaging = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.webflow.io');
+      if (!isDevOrStaging) return loadCSS(PROD_URL);
+
+      const origin = await findDevOrigin();
+      if (origin) {
+        loadCSS(origin + '/main.css');
+        initLiveReload(origin);
+        return;
+      }
+      loadCSS(PROD_URL);
+    }
+    load();
+  })();
+</script>
+
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.26.0/mapbox-gl.css" rel="stylesheet" />
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.26.0/mapbox-gl.js"></script>
