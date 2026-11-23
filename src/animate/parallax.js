@@ -12,8 +12,13 @@
 //                                 — plus haut = plus prononcé)
 //   data-parallax-start="top bottom"  point de départ ScrollTrigger
 //   data-parallax-end="bottom top"    point de fin ScrollTrigger
+//   data-parallax-scale="1"      zoom de l'élément (par défaut calculé selon
+//                                 speed pour les images de fond ; "1" = aucun
+//                                 zoom, pour un texte ou un SVG)
+//   data-parallax-media="(min-width: 992px)"  n'active l'effet que pour cette
+//                                 media query (ex. desktop seulement)
 
-function initOne(el) {
+function animate(el) {
   const speed = parseFloat(el.dataset.parallaxSpeed) || 0.15;
   const start = el.dataset.parallaxStart || "top bottom";
   const end = el.dataset.parallaxEnd || "bottom top";
@@ -21,7 +26,9 @@ function initOne(el) {
   // Marge de sécurité : l'image doit dépasser son cadre pour que le
   // déplacement ne révèle jamais de bord vide. scale proportionnel à
   // speed, avec un minimum pour rester sûr même à faible vitesse.
-  const scale = 1 + Math.max(speed * 1.5, 0.12);
+  // data-parallax-scale le remplace (ex. "1" pour un texte : pas de zoom).
+  const forcedScale = parseFloat(el.dataset.parallaxScale);
+  const scale = Number.isFinite(forcedScale) ? forcedScale : 1 + Math.max(speed * 1.5, 0.12);
 
   window.gsap.set(el, {
     scale,
@@ -29,7 +36,7 @@ function initOne(el) {
     willChange: "transform",
   });
 
-  window.gsap.to(el, {
+  return window.gsap.to(el, {
     yPercent: speed * 50,
     ease: "none",
     scrollTrigger: {
@@ -38,6 +45,26 @@ function initOne(el) {
       end,
       scrub: true,
     },
+  });
+}
+
+function initOne(el) {
+  // initParallax est appelé deux fois (initAnimations + index.js) : une seule
+  // animation par élément.
+  if (el.dataset.parallaxReady) return;
+  el.dataset.parallaxReady = "true";
+
+  const media = el.dataset.parallaxMedia;
+  if (!media) {
+    animate(el);
+    return;
+  }
+
+  // Effet limité à une taille d'écran : gsap.matchMedia annule l'animation
+  // (et remet l'élément à sa place) quand la media query ne correspond plus.
+  window.gsap.matchMedia().add(media, () => {
+    animate(el);
+    return () => window.gsap.set(el, { clearProps: "transform,willChange" });
   });
 }
 
