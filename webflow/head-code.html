@@ -16,6 +16,13 @@
     animation: reveal-fallback 0s 3s forwards;
   }
 
+  /* Durée vidéo : masquée tant que le script n'a pas posé la vraie durée
+     (évite le flash du texte statique « 2:30 » avant le chargement de main.css) */
+  [data-video-timer]:not(.is-ready),
+  .video_controller-time:not(.is-ready) {
+    opacity: 0;
+  }
+
   *:has(> [data-hero-parallax]) {
     position: relative;
     overflow: hidden;
