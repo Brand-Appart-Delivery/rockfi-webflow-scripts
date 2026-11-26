@@ -1,0 +1,62 @@
+// src/styles/check-list.scss
+// Check-lists liées au CMS (template Personas, blocs Préparation et Objectifs).
+// Le Rich Text .check-list_rt reçoit une liste à puces (<ul><li>) depuis le
+// CMS ; chaque puce reprend le rendu des check-lists statiques :
+// pastille verte .check-list_label (1.5rem, #99b100) + coche blanche,
+// texte .text 0.9375rem en noir 70 %, 1.125rem entre les lignes.
+
+$check-size: 1.5rem;
+$check-gap: 0.75rem;
+$check-color: #99b100;
+$check-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M1.5 7.5L4.6471 10L10.5 2' stroke='%23FFFFFF' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+.check-list_rt {
+  color: var(--base-color-neutral--black-70);
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+
+  ul,
+  ol {
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    // Bloc (pas flex) pour que gras / liens restent dans le flux du texte.
+    // Le padding-top centre la 1re ligne sur la pastille.
+    position: relative;
+    display: block;
+    min-height: $check-size;
+    margin: 0;
+    padding-left: $check-size + $check-gap;
+    padding-top: 0.125rem;
+    padding-top: calc((#{$check-size} - 1lh) / 2);
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: $check-size;
+      height: $check-size;
+      border-radius: 50%;
+      background: $check-color $check-icon center / 0.75rem no-repeat;
+    }
+  }
+
+  // Texte hors liste (paragraphe d'intro éventuel) : même espacement.
+  p + ul,
+  p + ol {
+    margin-top: 1.125rem;
+  }
+}
